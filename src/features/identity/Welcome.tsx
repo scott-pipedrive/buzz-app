@@ -260,7 +260,8 @@ export function Welcome({
   const [creating, setCreating] = useState(false);
 
   // The typed address survives a round trip to the find page and back.
-  const [entered, setEntered] = useState("");
+  const defaultCommunity = import.meta.env.VITE_BUZZ_DEFAULT_COMMUNITY ?? "";
+  const [entered, setEntered] = useState(defaultCommunity);
   const [otherOptions, setOtherOptions] = useState(false);
   const returningFromOptions = useRef(false);
   // The canonical origin the user asked to join: before sign-in it drives the
@@ -674,7 +675,7 @@ export function Welcome({
     handoff.current = undefined;
     setFinding(undefined);
     setInviteCode("");
-    setEntered("");
+    setEntered(defaultCommunity);
     setCreatable(undefined);
     setCreating(false);
     setup.reset();

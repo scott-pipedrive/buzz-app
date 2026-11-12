@@ -32,7 +32,9 @@ export function CommunityLanding({
   onJoined(id: string): void;
   onCreate(): void;
 }) {
-  const [link, setLink] = useState("");
+  const [link, setLink] = useState(
+    import.meta.env.VITE_BUZZ_DEFAULT_COMMUNITY ?? "",
+  );
   const [error, setError] = useState("");
   const [joining, setJoining] = useState<InviteLink>();
   const hostedAvailable = useSyncExternalStore(settingsCards.subscribe, () =>

@@ -83,7 +83,9 @@ export function CommunityDialog({
       invite?.community ??
       (recovery.pending
         ? communityDestination(recovery.pending.community).url
-        : ""),
+        : mode === "join"
+          ? (import.meta.env.VITE_BUZZ_DEFAULT_COMMUNITY ?? "")
+          : ""),
   );
   const [destination, setDestination] =
     useState<ReturnType<typeof communityDestination>>();
