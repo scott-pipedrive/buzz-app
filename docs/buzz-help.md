@@ -36,6 +36,10 @@ Voice work uses the same permissions as your text requests. Joining your Codex a
 this desktop. Keep Buzz and the Codex agent running here; the desktop microphone
 does not turn on. Other calls on another device do not seat an agent here.
 Leaving on every connected owner device closes the remote voice connection.
+When you leave a Huddle you started, desktop also ends it if you are its only
+human connected to audio and no additional device admission is visible. The ended card's
+View action keeps the transcript accessible. Other connected humans or known
+additional devices keep the room open.
 If agent voice stops, the compact player and Huddle window show the reason;
 leave and rejoin to retry.
 Final voice transcripts appear in the room with speaker credit and do not
@@ -837,6 +841,13 @@ for 30 days expires.
   for that community and identity. Collapsed section headings highlight when
   their channels have unread messages or thread replies. Muted channels do not
   highlight the heading.
+- Saved sidebar groups, stars, mutes, sorting and filters from another device or
+  a paired CLI update the open sidebar automatically while connected, in hosts
+  that support saved sidebar preferences. A CLI section-only move keeps a
+  starred channel in Starred until you unstar it.
+- **Plugin channel rows**: a plugin can open a channel from its Solo row and keep
+  that row selected. The sidebar then keeps its scope, scroll position, and open
+  sections. Opening the channel from Team follows the usual Team navigation.
 - **Side panels stay with their conversation**: a tab or panel you open beside a
   conversation, such as a thread, **Canvas**, a huddle, or Todos, stays open for
   that conversation when you go to another conversation or page and come back,
@@ -1051,7 +1062,9 @@ available rather than silently discarding it.
   the chevron also opens it. **Replace** opens a blank, masked field with small
   **Cancel / Save** buttons inside it. **Save** stores a non-empty replacement
   and returns to the masked view; **Cancel** discards the draft. Settings cannot
-  reveal or copy the saved key. Leaving the page discards the replacement draft.
+  reveal or copy the saved key. The small inline **Save** stays visible and is
+  disabled until you enter a key; **Cancel** stays available during replacement.
+  Leaving the page discards the replacement draft.
   **Remove** deletes the saved key from this device’s secure storage after
   confirmation. Key actions are unavailable while replacing the key.
   You can also add or remove a key
@@ -1134,7 +1147,7 @@ available rather than silently discarding it.
   agent’s activity or stop an individual request. Expand recorded work for its
   activity controls. Stop availability
   depends on the agent type.
-  For native Claude and Codex, Stop also cancels pending plugin tool calls
+  For native Claude, Codex and Goose, Stop also cancels pending plugin tool calls
   that use the host signal. It cannot undo a write already sent.
 - Agent-to-agent messages stay in the conversation as collapsed history after
   work finishes or you reopen a thread. Expand them to read dispatches, handoffs,
@@ -1247,6 +1260,18 @@ tab, asks **Discard changes?** first; **Keep editing** keeps them.
   its settings: sections it adds, such as GitHub comment authors, and Decisions
   API for a decision provider, such as TypeSafe. Only sections the Settings
   sidebar currently shows are linked. Back from one returns to those details.
+- When Builderlab and TypeSafe are available in **Settings → Decisions API**,
+  the **Decision provider** dropdown chooses Builderlab or TypeSafe. Each choice
+  uses that provider for requests. Choosing TypeSafe without a key opens a setup dialog.
+  Saving the key completes the switch; closing setup keeps the current provider.
+  If a selected Builderlab account lacks Decisions API access, the pane explains
+  that you can use your own TypeSafe key or contact your account administrator.
+- In **Settings → Decisions API**, TypeSafe’s saved API key stays masked. Its
+  chevron menu offers **Replace / Remove**. Replacement starts blank and masked,
+  with inline **Cancel / Save** controls. **Save** stays disabled until you enter
+  a key; removal asks for confirmation before
+  deleting the key from this device’s secure storage. Settings cannot reveal or
+  copy the saved key.
 - Some plugins let the person's other agents on this computer, such as Claude
   Code, Codex or Pi, use their tools while Buzz is open. Those agents run the
   helper Buzz installs, for example
