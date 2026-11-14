@@ -6,6 +6,8 @@ import {
   linkedDraftKey,
 } from "../../features/solo/linked-chat";
 import { EmptyState } from "../../shared/design-system/ui/EmptyState";
+import { appName } from "../../shared/app-name";
+import { splitPartition } from "../../features/relay/partition";
 import { LoadingRegion } from "../../shared/design-system/ui/LoadingRegion";
 import { TypingDots } from "../../shared/design-system/ui/TypingDots";
 import {
@@ -2052,6 +2054,18 @@ function ChannelWorkspace({
       !showingMediaReview,
     contentReadyChannel === currentId,
   );
+  const newMessageScope =
+    appName() === "Spheres" &&
+    !cached &&
+    !emptyDestination &&
+    !requestedChannel &&
+    !metadataPending &&
+    !navigation?.signal.aborted &&
+    list.status === "ready" &&
+    channels.length === 0 &&
+    viewer
+      ? splitPartition(scope)
+      : undefined;
   // The conversation: full width for Solo, or the first main-pane tab.
   const body = (
     <div className={styles.conversationBody}>
@@ -2063,7 +2077,7 @@ function ChannelWorkspace({
         }
         tabIndex={-1}
         ref={historyContainer}
-        className={`relative flex min-h-0 flex-col${current ? " flex-1" : ""}`}
+        className={`relative flex min-h-0 flex-col${current || newMessageScope ? " flex-1" : ""}`}
       >
         {current ? (
           <ChannelBody
@@ -2082,6 +2096,45 @@ function ChannelWorkspace({
               sent?.channelId === current.id ? sent.id : undefined
             }
           />
+        ) : newMessageScope ? (
+          <div
+            className={styles.spheresWelcome}
+            data-spheres-messages-welcome=""
+          >
+            <EmptyState
+              frame="none"
+              icon={
+                <img src="/spheres-mark.svg" alt="" width={48} height={48} />
+              }
+              title="Start a conversation"
+              description="Pick a person to send a direct message."
+              action={
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    const connection = relay.snapshot();
+                    if (
+                      connection.status !== "ready" ||
+                      connection.cached ||
+                      connection.session !== queries ||
+                      navigation?.signal.aborted
+                    )
+                      return;
+                    void navigator.open({
+                      version: 1,
+                      kind: "page",
+                      pluginId: "buzz.channels",
+                      pageId: "channels",
+                      scope: newMessageScope,
+                      route: { version: 1, params: "new-message" },
+                    });
+                  }}
+                >
+                  New message
+                </Button>
+              }
+            />
+          </div>
         ) : (
           <div
             className={styles.empty}

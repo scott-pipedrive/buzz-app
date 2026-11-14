@@ -1,4 +1,5 @@
 import { visibleTeams } from "../../features/agents/visible-teams";
+import { appName } from "../../shared/app-name";
 import { profileKey } from "../../features/profiles/target";
 import type { JsonValue } from "../../features/navigation/targets";
 import {
@@ -560,48 +561,89 @@ export function AgentsPage({
   const canImport =
     firstAgent &&
     (agentImports.length > 0 || legacy === null || !!legacy?.warnings.length);
-  const starts = (
-    <div className={cardStyles.starts}>
-      {canImport && (
-        <NewAgentTile
-          fullWidth
-          crew={agentImports}
-          description={
-            joinable.length
-              ? "You have agents in your other communities."
-              : agentImports.length
-                ? "You have agents in Buzz (Legacy)."
-                : "Check other communities and Buzz (Legacy) for agents."
+  const spheres = appName() === "Spheres";
+  const starts =
+    spheres && firstAgent ? (
+      <div className={styles.firstAgent}>
+        <EmptyState
+          frame="none"
+          icon={<img src="/spheres-mark.svg" alt="" width={48} height={48} />}
+          title="Create your first agent"
+          description="Give it a name and tell it what you’d like help with."
+          action={
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button
+                ref={newAgentButton}
+                variant="primary"
+                disabled={!types.length}
+                onClick={() => setCreating(true)}
+              >
+                Create agent
+              </Button>
+              <MenuRoot onOpenChange={refreshOnOpen}>
+                <MenuTrigger
+                  render={
+                    <Button variant="quiet">More ways to add an agent</Button>
+                  }
+                />
+                <MenuPopup align="center">
+                  <MenuItem onClick={openMarketplace}>
+                    Explore the marketplace
+                  </MenuItem>
+                  <MenuItem onClick={openImport}>Import an agent</MenuItem>
+                </MenuPopup>
+              </MenuRoot>
+              {agentImports.length > 0 && (
+                <Button variant="link" onClick={openImport}>
+                  Import your existing agents
+                </Button>
+              )}
+            </div>
           }
-          label={
-            agentImports.length
-              ? "Import them now"
-              : "Check for agents to import"
-          }
-          onClick={openImport}
         />
-      )}
-      <NewAgentTile
-        label="Create your first agent"
-        secondary={canImport}
-        disabled={snapshot.status !== "ready" || !types.length}
-        onClick={() => setCreating(true)}
-      />
-      <NewAgentTile
-        label="Explore the marketplace"
-        art={MARKETPLACE_ART}
-        secondary={canImport}
-        onClick={openMarketplace}
-      />
-      {firstAgent && !canImport && (
+      </div>
+    ) : (
+      <div className={cardStyles.starts}>
+        {canImport && (
+          <NewAgentTile
+            fullWidth
+            crew={agentImports}
+            description={
+              joinable.length
+                ? "You have agents in your other communities."
+                : agentImports.length
+                  ? "You have agents in Buzz (Legacy)."
+                  : "Check other communities and Buzz (Legacy) for agents."
+            }
+            label={
+              agentImports.length
+                ? "Import them now"
+                : "Check for agents to import"
+            }
+            onClick={openImport}
+          />
+        )}
         <NewAgentTile
-          label="Import from a file"
-          secondary
-          onClick={openImport}
+          label="Create your first agent"
+          secondary={canImport}
+          disabled={snapshot.status !== "ready" || !types.length}
+          onClick={() => setCreating(true)}
         />
-      )}
-    </div>
-  );
+        <NewAgentTile
+          label="Explore the marketplace"
+          art={MARKETPLACE_ART}
+          secondary={canImport}
+          onClick={openMarketplace}
+        />
+        {firstAgent && !canImport && (
+          <NewAgentTile
+            label="Import from a file"
+            secondary
+            onClick={openImport}
+          />
+        )}
+      </div>
+    );
   // Teams have no marketplace, so New team offers only making and importing.
   const newTeamMenu = (
     <MenuRoot onOpenChange={refreshOnOpen}>
@@ -1022,6 +1064,7 @@ export function AgentsPage({
         <AgentCreateDialog
           agents={agents}
           types={types}
+          compact={spheres}
           community={
             connection.status === "ready" ? connection.origin : undefined
           }

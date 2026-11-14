@@ -1,0 +1,89 @@
+/* Spheres supplies the neutral palette. Shared controls still own their states. */
+:root[data-spheres][data-color-mode="light"],
+:root[data-spheres] .light {
+  --neutral-standard-text: #242521;
+  --neutral-navigation-text: #46423b;
+  --neutral-navigation-quiet: #fbf5ec;
+  --neutral-navigation-unread: #29251e;
+  --neutral-1: #fffaf3;
+  --neutral-2: #f6eee2;
+  --neutral-3: #ede3d5;
+  --neutral-4: #ded2c3;
+  --neutral-5: #cfc1af;
+  --neutral-quiet-hover: #f3eadd;
+  --neutral-9: #60584e;
+  --neutral-10: #554e45;
+  --neutral-11: #302d27;
+  --neutral-12: #242521;
+  --bubble-received: #f4ede3;
+  --bubble-neutral: #ece2d5;
+  --popover-glass-fill: rgb(255 250 243 / 94%);
+  --glass-2: rgb(255 250 243 / 74%);
+  --glass-3: rgb(255 250 243 / 82%);
+  --glass-4: rgb(255 250 243 / 90%);
+  --spheres-paper: #f5ecde;
+  --spheres-paper-light: #f8efe2;
+  --spheres-paper-edge: #eee2d2;
+}
+
+:root[data-spheres][data-color-mode="dark"],
+:root[data-spheres] .dark {
+  --neutral-1: #181615;
+  --neutral-2: #201d1b;
+  --neutral-3: #272421;
+  --neutral-4: #312c28;
+  --neutral-5: #3e3730;
+  --neutral-6: #4e453c;
+  --neutral-12: #f8f0e5;
+  --neutral-raised: #342e29;
+  --neutral-quiet-hover: #39312a;
+  --bubble-received: #342e29;
+  --bubble-neutral: #3b332c;
+  --popover-glass-fill: rgb(52 46 41 / 94%);
+  --glass-2: rgb(39 36 33 / 74%);
+  --glass-3: rgb(39 36 33 / 82%);
+  --glass-4: rgb(39 36 33 / 90%);
+}
+
+:root[data-spheres] {
+  --spheres-paper-grain: url("/spheres/paper-grain.png");
+}
+
+@media (forced-colors: none) {
+  :root[data-spheres] .shell-sidebar {
+    --surface-sidebar-selected: var(--surface-navigation-selected);
+    --text-sidebar-selected: var(--text-navigation-selected);
+  }
+
+  :root[data-spheres][data-color-mode="light"] [data-spheres-messages-welcome] {
+    --spheres-welcome-tint: color-mix(
+      in srgb,
+      var(--surface-panel) 86%,
+      transparent
+    );
+    background-image:
+      linear-gradient(var(--spheres-welcome-tint), var(--spheres-welcome-tint)),
+      var(--spheres-paper-grain);
+    background-size:
+      auto,
+      224px 224px;
+  }
+
+  :root[data-spheres][data-color-mode="light"] .shell-background {
+    background-image:
+      linear-gradient(rgb(243 234 221 / 84%), rgb(243 234 221 / 84%)),
+      var(--spheres-paper-grain);
+    background-size:
+      auto,
+      224px 224px;
+  }
+
+  :root[data-spheres][data-color-mode="light"] .buzz-launch {
+    background: radial-gradient(
+      ellipse at 38% 24%,
+      var(--spheres-paper-light),
+      var(--spheres-paper) 58%,
+      var(--spheres-paper-edge)
+    );
+  }
+}

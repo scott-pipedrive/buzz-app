@@ -3,6 +3,7 @@
 @import "../shared/design-system/styles/tokens.css";
 @import "../shared/design-system/styles/typography.css";
 @import "../shared/styles/tokens.css";
+@import "./spheres-theme.css";
 
 @layer base {
   html {

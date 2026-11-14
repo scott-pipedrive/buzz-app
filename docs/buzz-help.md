@@ -782,6 +782,8 @@ for 30 days expires.
   configured avatar.
   The **+** opens New from the sidebar. **Cmd/Ctrl+N** opens that menu where
   the current app has a creation sidebar.
+- In Spheres, an empty Messages pane offers **New message** to start a direct
+  message with a person.
 - **Link boundaries**: a bare http(s) or buzz link ends at whitespace and at
   fullwidth, CJK or curly-quote punctuation such as `，`, `。`, `」` or `’`. In a
   host name, `。` works as a dot. Wrap it as `<url>` to keep them in it.
@@ -1002,6 +1004,11 @@ available rather than silently discarding it.
   style, tasks, initiative, and boundaries. They do not add tools, credentials,
   or permissions. Saving instructions affects future work, not past messages.
   Never say changes were saved until Save succeeds.
+- In Spheres, **Create agent** starts with the name and any instructions the
+  harness supports. Model and provider setup are visible in the form. Use
+  **Agent settings** for Thinking where available and **Choose an avatar** to
+  change the default picture. **More ways to add an agent** opens import and the
+  marketplace from the first-agent screen.
 - Claude Code's open settings follow saved changes to fields you haven't edited.
   Your unsaved edits stay in the form. If the same setting changed elsewhere,
   review the values beside that setting, then choose **Use latest** or **Keep mine**

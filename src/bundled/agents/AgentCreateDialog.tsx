@@ -1,4 +1,3 @@
-// Avatar selection above the agent identity and type-owned setup fields.
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import type { AgentCardDraft } from "../../features/agents/agent-card";
 import {
@@ -14,6 +13,7 @@ import type {
   AgentUpdateRequest,
 } from "../../features/agents/service";
 import { RobotIcon } from "../../shared/design-system/icons";
+import { Accordion } from "../../shared/design-system/ui/Accordion";
 import { Button } from "../../shared/design-system/ui/Button";
 import { Dialog } from "../../shared/design-system/ui/Dialog";
 import { Select } from "../../shared/design-system/ui/Select";
@@ -66,6 +66,7 @@ const startingConfig = (type: RegisteredAgentType | undefined) => {
 export function AgentCreateDialog({
   agents,
   types,
+  compact = false,
   community,
   onClose,
   onCreated,
@@ -76,6 +77,8 @@ export function AgentCreateDialog({
 }: {
   agents: Agents;
   types: readonly RegisteredAgentType[];
+  /** Leads with the name and type-owned instructions for a new agent. */
+  compact?: boolean;
   community?: string | undefined;
   onClose(): void;
   onCreated(agent: Agent): void;
@@ -284,6 +287,54 @@ export function AgentCreateDialog({
       }
     />
   );
+  const avatarPicker = (
+    <section aria-label="Identity" className={styles.profileIdentity}>
+      <div>
+        <AgentAvatarPicker
+          name={name}
+          selection={avatar}
+          disabled={pending}
+          community={community}
+          onBusyChange={setAvatarBusy}
+          onChange={(selection) => {
+            setAvatar(selection);
+            setDirty(true);
+            setError("");
+          }}
+          avatarRef={avatarRef}
+        />
+      </div>
+    </section>
+  );
+  const agentDetails = Create ? (
+    <Create
+      key={type.key}
+      config={config}
+      disabled={pending}
+      onChange={(next) => {
+        setConfig(next);
+        setDirty(true);
+      }}
+    />
+  ) : (
+    <p className="m-0 text-body-sm text-secondary">
+      Set it up after it is made.
+    </p>
+  );
+  const thinking = Thinking && (
+    <PreferenceRow
+      title="Thinking"
+      trailing={
+        <Thinking
+          key={type.key}
+          {...(edited ? { agent: edited } : {})}
+          config={config}
+          disabled={pending}
+          onChange={(next) => chooseModel(type, next)}
+        />
+      }
+    />
+  );
   const errorMessage = error && (
     <p
       key={error}
@@ -382,23 +433,7 @@ export function AgentCreateDialog({
         }}
       >
         <div className={styles.createStack}>
-          <section aria-label="Identity" className={styles.profileIdentity}>
-            <div>
-              <AgentAvatarPicker
-                name={name}
-                selection={avatar}
-                disabled={pending}
-                community={community}
-                onBusyChange={setAvatarBusy}
-                onChange={(selection) => {
-                  setAvatar(selection);
-                  setDirty(true);
-                  setError("");
-                }}
-                avatarRef={avatarRef}
-              />
-            </div>
-          </section>
+          {!compact && avatarPicker}
           <div>
             <Field
               label="Name"
@@ -426,6 +461,7 @@ export function AgentCreateDialog({
               </div>
             </Field>
           </div>
+          {compact && agentDetails}
           <section
             aria-label="AI configuration"
             className={styles.configuration}
@@ -461,38 +497,33 @@ export function AgentCreateDialog({
                     }
                   />
                 )}
-                {Thinking && (
-                  <PreferenceRow
-                    title="Thinking"
-                    trailing={
-                      <Thinking
-                        key={type.key}
-                        {...(edited ? { agent: edited } : {})}
-                        config={config}
-                        disabled={pending}
-                        onChange={(next) => chooseModel(type, next)}
-                      />
-                    }
-                  />
-                )}
+                {!compact && thinking}
               </SettingsGroup>
             )}
+            {compact && (
+              <Accordion
+                variant="form"
+                keepMounted
+                items={[
+                  ...(!Configuration && thinking
+                    ? [
+                        {
+                          value: "thinking",
+                          title: "Agent settings",
+                          content: <SettingsGroup>{thinking}</SettingsGroup>,
+                        },
+                      ]
+                    : []),
+                  {
+                    value: "avatar",
+                    title: "Choose an avatar",
+                    content: avatarPicker,
+                  },
+                ]}
+              />
+            )}
           </section>
-          {Create ? (
-            <Create
-              key={type.key}
-              config={config}
-              disabled={pending}
-              onChange={(next) => {
-                setConfig(next);
-                setDirty(true);
-              }}
-            />
-          ) : (
-            <p className="m-0 text-body-sm text-secondary">
-              Set it up after it is made.
-            </p>
-          )}
+          {!compact && agentDetails}
           {preview && type && (
             <MigrationPreview
               source={types.find((item) => item.key === edited?.type)}

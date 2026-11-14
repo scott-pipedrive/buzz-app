@@ -169,6 +169,7 @@ function setup(
   create: (input: NewAgent) => Promise<Agent> = async () => made,
   community?: string,
   request?: AgentCreationRequest,
+  compact?: boolean,
 ) {
   const agents = { create: vi.fn(create) } as unknown as Agents & {
     create: ReturnType<typeof vi.fn>;
@@ -182,6 +183,7 @@ function setup(
       community={community}
       onCreated={onCreated}
       onClose={onClose}
+      compact={compact ?? false}
       {...(request && { request })}
     />,
   );
@@ -288,6 +290,37 @@ it("creates with the name, a pack picture and the config from the type's view", 
   });
   expect(avatar.url).toMatch(/^https:\/\//);
   expect(onCreated).toHaveBeenCalledExactlyOnceWith(made);
+});
+
+it("keeps the selected avatar when its settings are closed before creating", async () => {
+  const { agents, dialog, user } = setup(
+    [echo],
+    undefined,
+    undefined,
+    undefined,
+    true,
+  );
+  const avatarSettings = within(dialog).getByRole("button", {
+    name: "Choose an avatar",
+  });
+  expect(avatarSettings).toHaveAttribute("aria-expanded", "false");
+  await user.type(within(dialog).getByLabelText("Name"), "Nova");
+  await user.type(within(dialog).getByLabelText("Reply"), "Hi there");
+  await user.click(avatarSettings);
+  const grid = within(dialog).getByRole("group", { name: "Agent avatars" });
+  const avatar = agentAvatars.find((item) =>
+    within(grid).queryByRole("button", { name: item.label }),
+  );
+  if (!avatar) throw new Error("The avatar picker has no pack avatar");
+  await user.click(within(grid).getByRole("button", { name: avatar.label }));
+  await user.click(avatarSettings);
+  await user.click(createButton());
+  expect(agents.create).toHaveBeenCalledExactlyOnceWith({
+    type: "test/echo",
+    name: "Nova",
+    picture: avatar.url,
+    config: { reply: "Hi there" },
+  });
 });
 
 it("cancels an in-flight Gloopy swap before switching to Emoji", async () => {
