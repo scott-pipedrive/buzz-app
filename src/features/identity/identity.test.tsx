@@ -3813,6 +3813,8 @@ it("Join journals the join, proves admission with the signed profile read, and c
         pubkey: member.pubkey,
         tags: [],
         content: JSON.stringify({
+          // Local time is shared by default from the first publication.
+          tz: new Intl.DateTimeFormat().resolvedOptions().timeZone,
           name: "Ada",
           display_name: "Ada",
           picture: "",
@@ -5120,7 +5122,9 @@ it("Enter your private key on Welcome back classifies what is pasted, and Back r
   const user = userEvent.setup();
   await keyImportPage(user, identity);
   expect(
-    screen.getByText(`Paste your private key to restore your ${appName()} profile. You can also select or drop a text file with your key.`),
+    screen.getByText(
+      `Paste your private key to restore your ${appName()} profile. You can also select or drop a text file with your key.`,
+    ),
   ).toBeVisible();
   // Masked and focused on arrival; reveal requires an explicit action.
   expect(keyField()).toHaveFocus();

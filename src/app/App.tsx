@@ -38,7 +38,9 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type ReactNode,
 } from "react";
+import type { PageNavigation } from "../features/navigation/service";
 import { registerAppShortcuts } from "./shortcuts";
 import type { AppServices } from "./services";
 import { Settings } from "./Settings";
@@ -136,6 +138,25 @@ function ConnectedApp({ services }: { services: AppServices }) {
       </AgentsContext.Provider>
     </ToastProvider>
   );
+}
+
+type Route = ReturnType<typeof useAppNavigation>;
+/** Only this subtree follows the page's request, not the whole shell. */
+function Presented({
+  store,
+  resolve,
+  children,
+}: {
+  store: Route["presented"];
+  resolve: Route["requestFor"];
+  children: (request: PageNavigation | undefined) => ReactNode;
+}) {
+  const presentation = useSyncExternalStore(
+    store.subscribe,
+    store.get,
+    store.get,
+  );
+  return children(resolve(presentation));
 }
 
 function ConnectedAppContent({ services }: { services: AppServices }) {
@@ -358,15 +379,25 @@ function ConnectedAppContent({ services }: { services: AppServices }) {
   // Keep the parser launch surface through local bootstrap, not network refresh.
   if (!settings && restoring)
     return document.getElementById("buzz-launch") ? null : (
-      <div className="buzz-launch" role="status" aria-label={`Opening ${appName()}`}>
+      <div
+        className="buzz-launch"
+        role="status"
+        aria-label={`Opening ${appName()}`}
+      >
         <LoadingWindowHeader />
         <picture>
           <source
             media="(prefers-reduced-motion: reduce)"
-            srcSet={appName() === "Spheres" ? "/spheres-mark.svg" : "/buzz-mark.svg"}
+            srcSet={
+              appName() === "Spheres" ? "/spheres-mark.svg" : "/buzz-mark.svg"
+            }
           />
           <img
-            src={appName() === "Spheres" ? "/spheres-loading-mark.svg" : "/buzz-loading-mark.svg"}
+            src={
+              appName() === "Spheres"
+                ? "/spheres-loading-mark.svg"
+                : "/buzz-loading-mark.svg"
+            }
             alt={appName()}
             width="72"
             height="72"
@@ -610,6 +641,7 @@ function ConnectedAppContent({ services }: { services: AppServices }) {
       {isTauri() && (
         <PairingPrompt
           communities={client.memberships.map((membership) => membership.id)}
+          active={client.selected}
         />
       )}
       <ChannelNavigationProvider relay={services.relay}>
@@ -628,30 +660,43 @@ function ConnectedAppContent({ services }: { services: AppServices }) {
           workspaceRef={setWorkspaceElement}
           sidebar={(pageNavigation, creationAction) =>
             workspace.page?.sidebar && pageSidebarReady ? (
-              <OwnedContribution
-                entry={workspace.page}
-                registry={services.pages}
-                resetIdentity={workspace.request}
-                fallback={
-                  <div className="shell-sidebar-default">
-                    <SidebarFrame label={`${workspace.page.title} sidebar`}>
-                      <SidebarList>
-                        <p role="alert">This page’s sidebar is unavailable.</p>
-                        {pageNavigation}
-                      </SidebarList>
-                    </SidebarFrame>
-                  </div>
-                }
+              <Presented
+                store={route.presented}
+                resolve={route.workspaceRequestFor}
               >
-                {(entry) => {
-                  const Sidebar = entry.sidebar;
-                  return Sidebar ? (
-                    <Sidebar target={workspace.target}>
-                      {pageNavigation}
-                    </Sidebar>
-                  ) : null;
-                }}
-              </OwnedContribution>
+                {(request) =>
+                  workspace.page && (
+                    <OwnedContribution
+                      entry={workspace.page}
+                      registry={services.pages}
+                      resetIdentity={request}
+                      fallback={
+                        <div className="shell-sidebar-default">
+                          <SidebarFrame
+                            label={`${workspace.page.title} sidebar`}
+                          >
+                            <SidebarList>
+                              <p role="alert">
+                                This page’s sidebar is unavailable.
+                              </p>
+                              {pageNavigation}
+                            </SidebarList>
+                          </SidebarFrame>
+                        </div>
+                      }
+                    >
+                      {(entry) => {
+                        const Sidebar = entry.sidebar;
+                        return Sidebar ? (
+                          <Sidebar target={workspace.target}>
+                            {pageNavigation}
+                          </Sidebar>
+                        ) : null;
+                      }}
+                    </OwnedContribution>
+                  )
+                }
+              </Presented>
             ) : workspace.page?.sidebar ? (
               <div className="shell-sidebar-default">
                 <SidebarFrame label="Page navigation">
@@ -735,14 +780,23 @@ function ConnectedAppContent({ services }: { services: AppServices }) {
               opening
             )
           ) : workspace.page ? (
-            <PageView
-              page={workspace.page}
-              navigation={workspace.request}
-              companion={pageOwnsCompanion ? companion : undefined}
-              companionOpening={
-                pageOwnsCompanion ? launcher.opening : undefined
+            <Presented
+              store={route.presented}
+              resolve={route.workspaceRequestFor}
+            >
+              {(request) =>
+                workspace.page && (
+                  <PageView
+                    page={workspace.page}
+                    navigation={request}
+                    companion={pageOwnsCompanion ? companion : undefined}
+                    companionOpening={
+                      pageOwnsCompanion ? launcher.opening : undefined
+                    }
+                  />
+                )
               }
-            />
+            </Presented>
           ) : null}
         </AppShell>
         <Dialog
@@ -807,48 +861,52 @@ function ConnectedAppContent({ services }: { services: AppServices }) {
                 hidden={settingsBlocked}
                 inert={settingsBlocked}
               >
-                <Settings
-                  agents={services.agents}
-                  decisions={services.decisions}
-                  plugins={plugins}
-                  cards={services.settingsCards}
-                  adminAccess={services.adminAccess}
-                  communities={services.communities}
-                  identity={services.identity}
-                  federatedIdentity={services.federatedIdentity}
-                  builderlabIdentity={services.firstRunFederatedIdentity}
-                  appearance={services.appearance}
-                  shortcuts={services.shortcuts}
-                  shortcutBindings={services.shortcutBindings}
-                  notifications={services.notifications}
-                  updates={services.updates}
-                  navigation={route.request}
-                  installRequests={services.pluginInstallRequests}
-                  navigationPane
-                  onDeparturePending={(pending) => {
-                    const client = services.communities.snapshot();
-                    const attempt = route.state.attempt;
-                    if (pending && client.viewer && client.selected)
-                      setDeparture({
-                        attempt,
-                        viewer: client.viewer,
-                        communityId: client.selected,
-                      });
-                    else if (!pending)
-                      setDeparture((current) =>
-                        current?.attempt === attempt ? null : current,
-                      );
-                  }}
-                  onSection={openSettingsSection}
-                  onPluginImportClosed={() =>
-                    route.dismissPluginImport(route.request)
-                  }
-                  onPluginDetailsClosed={() =>
-                    route.dismissPluginDetails(route.request)
-                  }
-                  onProvider={route.setSettingsProvider}
-                  onUnsavedChange={setSettingsUnsaved}
-                />
+                <Presented store={route.presented} resolve={route.requestFor}>
+                  {(request) => (
+                    <Settings
+                      agents={services.agents}
+                      decisions={services.decisions}
+                      plugins={plugins}
+                      cards={services.settingsCards}
+                      adminAccess={services.adminAccess}
+                      communities={services.communities}
+                      identity={services.identity}
+                      federatedIdentity={services.federatedIdentity}
+                      builderlabIdentity={services.firstRunFederatedIdentity}
+                      appearance={services.appearance}
+                      shortcuts={services.shortcuts}
+                      shortcutBindings={services.shortcutBindings}
+                      notifications={services.notifications}
+                      updates={services.updates}
+                      navigation={request}
+                      installRequests={services.pluginInstallRequests}
+                      navigationPane
+                      onDeparturePending={(pending) => {
+                        const client = services.communities.snapshot();
+                        const attempt = route.state.attempt;
+                        if (pending && client.viewer && client.selected)
+                          setDeparture({
+                            attempt,
+                            viewer: client.viewer,
+                            communityId: client.selected,
+                          });
+                        else if (!pending)
+                          setDeparture((current) =>
+                            current?.attempt === attempt ? null : current,
+                          );
+                      }}
+                      onSection={openSettingsSection}
+                      onPluginImportClosed={() =>
+                        route.dismissPluginImport(request)
+                      }
+                      onPluginDetailsClosed={() =>
+                        route.dismissPluginDetails(request)
+                      }
+                      onProvider={route.setSettingsProvider}
+                      onUnsavedChange={setSettingsUnsaved}
+                    />
+                  )}
+                </Presented>
               </div>
             )}
           </div>

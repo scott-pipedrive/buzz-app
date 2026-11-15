@@ -461,10 +461,6 @@ pub fn bundled_manifests() -> Vec<Manifest> {
         serde_json::from_str(include_str!("../../../src/bundled/charts/manifest.json"))
             .expect("bundled charts manifest"),
         serde_json::from_str(include_str!(
-            "../../../src/bundled/link-previews/manifest.json"
-        ))
-        .expect("bundled link previews manifest"),
-        serde_json::from_str(include_str!(
             "../../../src/bundled/identity-naming/manifest.json"
         ))
         .expect("identity naming manifest"),
@@ -557,7 +553,6 @@ fn enabled_by_default(id: &str) -> bool {
             | "buzz.terminal"
             | "buzz.profiles"
             | "buzz.links"
-            | "buzz.link-previews"
             | "buzz.voice-notes"
             | "buzz.huddles"
             | "buzz.github"
@@ -2935,7 +2930,10 @@ mod tests {
                 .find(|plugin| plugin.manifest.id == "buzz.huddles")
                 .expect("Desktop must expose the Huddles plugin")
         };
-        assert_eq!(huddles().enabled, super::SPHERES_PLUGIN_DEFAULTS != Some("1"));
+        assert_eq!(
+            huddles().enabled,
+            super::SPHERES_PLUGIN_DEFAULTS != Some("1")
+        );
         manager.change("disable", "buzz.huddles").unwrap();
         assert!(!huddles().enabled);
         manager.change("enable", "buzz.huddles").unwrap();

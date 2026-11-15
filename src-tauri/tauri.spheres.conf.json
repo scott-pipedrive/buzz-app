@@ -1,6 +1,6 @@
 {
   "productName": "Spheres",
-  "version": "0.7.10",
+  "version": "1.0.2",
   "identifier": "com.askbellboy.buzz.preview",
   "build": {
     "beforeBuildCommand": "node scripts/build-goose-acp.mjs && node scripts/build-agent-command.mjs --dev && node scripts/build-buzz-cli.mjs --dev && pnpm build"

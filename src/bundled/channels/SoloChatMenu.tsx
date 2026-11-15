@@ -124,7 +124,7 @@ export function SoloChatMenuItems({
         Chat settings
       </MenuItem>
       {active &&
-        !regions.excluded.has(channel.id) &&
+        !regions.managed.has(channel.id) &&
         onMove &&
         onNewWorkspace && (
           <MenuSubmenu>
@@ -160,7 +160,7 @@ export function SoloChatMenuItems({
       )}
       <ChannelCopyLinkMenuItem channelId={channel.id} />
       {active &&
-        !regions.excluded.has(channel.id) &&
+        !regions.managed.has(channel.id) &&
         onConvert &&
         canConvertToChannel(session, channel) && (
           <MenuItem onClick={onConvert}>
