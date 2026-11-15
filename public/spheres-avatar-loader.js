@@ -365,8 +365,6 @@ function centreFor(ink, spacing) {
 const radius = 34;
 const circle = new Path2D();
 circle.arc(50, 50, radius, 0, Math.PI * 2);
-matchMedia("(prefers-reduced-motion: reduce)");
-performance.now();
 const rgb = (colour) => `rgb(${colour.join(" ")})`;
 const paper = [
 	248,
@@ -887,6 +885,5 @@ function mountSpheresAvatar(host) {
 	sync();
 	return stop;
 }
-for (const host of document.querySelectorAll("[data-spheres-avatar-auto]")) if (!host.closest("#buzz-launch") || !document.documentElement.hasAttribute("data-welcome-intro")) mountSpheresAvatar(host);
 //#endregion
 export { createSpheresMerge, mountSpheresAvatar };
