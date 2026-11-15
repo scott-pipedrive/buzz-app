@@ -56,16 +56,6 @@
   height: auto;
 }
 
-.tagline {
-  margin: var(--space-4) 0 0;
-  font-family: var(--font-sans);
-  font-size: var(--text-body-lg);
-  font-weight: var(--text-body-lg--font-weight);
-  line-height: var(--text-body-lg--line-height);
-  letter-spacing: var(--text-body-lg--letter-spacing);
-  text-align: center;
-}
-
 .actions {
   width: 100%;
   max-width: 27.5rem;
@@ -153,9 +143,14 @@
   margin-inline: auto;
 }
 
-/* Mobile welcome is always the light brand palette, independent of app theme. */
+/* Spheres' warm artwork palette stays light, independent of workspace theme. */
 .welcome {
-  background: #d7d72e;
+  background: radial-gradient(
+    ellipse at 38% 24%,
+    var(--spheres-paper-light, #f8efe2) 0%,
+    var(--spheres-paper, #f5ecde) 58%,
+    var(--spheres-paper-edge, #eee2d2) 100%
+  );
   color: var(--text-standard);
 }
 .welcome .wordmark {
@@ -164,6 +159,9 @@
 .welcome .content {
   max-width: 43rem;
   position: relative;
+  justify-content: center;
+  padding-top: clamp(3.5rem, 14dvh, 7rem);
+  padding-bottom: var(--space-8);
 }
 .welcome .titlebar {
   position: relative;
@@ -192,7 +190,7 @@
 }
 /* Builderlab/Auth0 card composition, using the same shared controls and Panel. */
 .step {
-  background: var(--surface-onboarding);
+  background: var(--surface-panel);
   --text-heading: var(--text-title);
   --text-heading--line-height: var(--text-title--line-height);
   --text-heading--font-weight: var(--text-title--font-weight);
@@ -268,7 +266,7 @@
   width: 5rem;
   height: 3.3125rem;
   background: currentColor;
-  mask: url("/welcome-bee.svg") center / contain no-repeat;
+  mask: url("/spheres-mark.svg") center / contain no-repeat;
 }
 @media (prefers-reduced-motion: no-preference) {
   .loadingBee {
@@ -304,86 +302,26 @@
   }
 }
 
-/* One-time Mac introduction. Opacity and transforms keep the reveal composited. */
-.welcome[data-intro="waiting"],
-.welcome[data-intro="running"] {
-  background: transparent;
+/* Keep the account controls legible as the field moves behind them. */
+.welcome .brand {
+  flex: 0 0 auto;
+  padding-block: 0 var(--space-6);
 }
-.welcome::before {
+.welcome .content::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: #d7d72e;
-  z-index: -2;
+  z-index: -1;
   pointer-events: none;
+  background: radial-gradient(
+    ellipse min(43vw, 20rem) 9rem at center,
+    var(--spheres-paper, #f5ecde) 38%,
+    transparent 100%
+  );
 }
-.welcome[data-intro="waiting"]::before,
-.welcome[data-intro="waiting"] .brand,
-.welcome[data-intro="waiting"] .actions,
-.welcome[data-intro="waiting"] .bees {
-  opacity: 0;
-}
-.welcome[data-intro="running"]::before {
-  animation: welcome-reveal 1100ms 4000ms both;
-}
-.welcome[data-intro="running"] .wordmark {
-  animation: welcome-logo-enter 700ms 5000ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-.welcome[data-intro="running"] .tagline {
-  animation: welcome-reveal 500ms 6800ms both;
-}
-.welcome[data-intro="running"] .actions {
-  animation: welcome-reveal 500ms 7800ms both;
-}
-.welcome[data-intro="running"] .beeArrival {
-  animation: bee-arrive 1800ms both;
-}
-.bee:nth-child(2n) .beeArrival {
-  animation-delay: 200ms;
-}
-.bee:nth-child(3n) .beeArrival {
-  animation-delay: 450ms;
-}
-.bee:nth-child(4n) .beeArrival {
-  animation-delay: 700ms;
-}
-.bee:nth-child(5n) .beeArrival {
-  animation-delay: 950ms;
-}
-/* buzz.xyz hero: 94% → 100%, 700ms, its shared entrance easing. */
-@keyframes welcome-logo-enter {
-  from {
-    opacity: 0;
-    transform: scale(0.94);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-@keyframes welcome-reveal {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-@keyframes bee-arrive {
-  from {
-    translate: -110vw 0;
-  }
-  to {
-    translate: 0 0;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .welcome[data-intro]::before,
-  .welcome[data-intro] .wordmark,
-  .welcome[data-intro] .tagline,
-  .welcome[data-intro] .actions,
-  .welcome[data-intro] .beeArrival {
-    animation: none;
+@media (forced-colors: active) {
+  .welcome .content::before {
+    content: none;
   }
 }
 
@@ -436,4 +374,10 @@
   width: calc(var(--space-6) + var(--space-8));
   height: calc(var(--space-6) + var(--space-8));
   object-fit: contain;
+}
+
+.loadingSpheres {
+  display: block;
+  width: 5rem;
+  height: 5rem;
 }

@@ -1,15 +1,9 @@
 import type { ReactNode } from "react";
 import { AvatarArtworkContext } from "../../shared/design-system/ui/Avatar";
-import { agentAvatars } from "./avatar-packs";
+import { findPackAvatar } from "./avatar-packs";
 
-const packsBySource = new Map(
-  agentAvatars.flatMap((avatar) => [
-    [avatar.url, avatar] as const,
-    [avatar.preview, avatar] as const,
-  ]),
-);
 function renderArtwork(src: string) {
-  const avatar = packsBySource.get(src);
+  const avatar = findPackAvatar(src);
   return avatar ? (
     <img
       data-loaded="true"

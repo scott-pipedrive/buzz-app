@@ -79,6 +79,7 @@ const sameActivity = (
     const other = b.get(agent);
     return (
       other?.label === value.label &&
+      other.phase === value.phase &&
       other.detailAvailability === value.detailAvailability &&
       other.roots.length === value.roots.length &&
       other.roots.every((root, i) => root === value.roots[i])
@@ -549,6 +550,12 @@ export function TypingIndicator({
                 id,
                 name: name(id),
                 picture: avatarMedia(profiles.get(id)?.picture, session.media),
+                expression:
+                  details.get(id)?.phase === "queued"
+                    ? "listening"
+                    : details.get(id)?.phase === "permission"
+                      ? "waiting"
+                      : "working",
               }))}
               picture={avatarMedia(
                 profiles.get(firstAgent)?.picture,

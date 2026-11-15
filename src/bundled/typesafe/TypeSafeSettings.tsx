@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { Fragment, useRef, useState, useSyncExternalStore } from "react";
 import { ApiKeyForm } from "../../features/settings/ApiKeyForm";
 import { SavedApiKey } from "../../features/settings/SavedApiKey";
@@ -12,7 +13,7 @@ const KEY_STATUS: Record<KeyState, string | undefined> = {
   saved: "Saved securely on this computer.",
   missing: undefined,
   unreadable:
-    "Buzz could not read your saved key. Unlock your keychain, or replace or remove the key.",
+    `${appName()} could not read your saved key. Unlock your keychain, or replace or remove the key.`,
   refused:
     "TypeSafe did not accept your key. Replace it to keep using TypeSafe.",
 };
@@ -70,7 +71,7 @@ export function TypeSafeSettings({
   if (!typesafe.desktop())
     return (
       <p role="status" className="m-0 text-body-sm text-secondary">
-        Open the Buzz desktop app to use TypeSafe.
+        {`Open the ${appName()} desktop app to use TypeSafe.`}
       </p>
     );
   const Group = grouped ? SettingsGroup : Fragment;

@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { ChangeEvent } from "react";
 import type { OutgoingEvent } from "../../features/relay/outbox";
@@ -296,7 +297,7 @@ function FeedbackForConnection({
       }}
       dismissOnOutsideClick={false}
       title="Send feedback"
-      description="Feedback text goes to this Buzz deployment's feedback inbox, not a channel. Images and optional diagnostics use ordinary media storage, not inbox-only access; people allowed to read media on this deployment may access them if they have the link. Images upload when selected; diagnostics upload when you send. Removing an attachment or closing this form does not delete uploaded files."
+      description={`Feedback text goes to this ${appName()} deployment's feedback inbox, not a channel. Images and optional diagnostics use ordinary media storage, not inbox-only access; people allowed to read media on this deployment may access them if they have the link. Images upload when selected; diagnostics upload when you send. Removing an attachment or closing this form does not delete uploaded files.`}
       actions={
         <>
           <Button onClick={close}>Close</Button>
@@ -417,7 +418,7 @@ function FeedbackForConnection({
       )}
       {!available && (
         <p role="status">
-          Connect to a Buzz deployment to send or retry feedback.
+          {`Connect to a ${appName()} deployment to send or retry feedback.`}
         </p>
       )}
       {error && <p role="alert">{error}</p>}

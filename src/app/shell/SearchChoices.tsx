@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { matchRank } from "../../features/search/match";
 import {
   useLayoutEffect,
@@ -130,7 +131,7 @@ export function SearchChoices({
   displayQuery,
   onDisplayQueryChange,
   input,
-  label = "Search Buzz",
+  label = `Search ${appName()}`,
   scope,
   scopeAction,
   children,

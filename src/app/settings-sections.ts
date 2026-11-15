@@ -1,5 +1,6 @@
 // One Settings section policy for the standalone and shell presentations and
 // route classification. Visibility and authorization stay with settingsCards.
+import { appName } from "../shared/app-name";
 import { isTauri } from "@tauri-apps/api/core";
 import { developerMode } from "../features/developer/mode";
 import {
@@ -172,7 +173,7 @@ export function settingsSections(
       : []),
     {
       id: "app",
-      label: "Buzz",
+      label: appName(),
       sections: [
         identity,
         // Paired command-line tools exist only in the desktop app.

@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { appName } from "../../shared/app-name";
 import type { Agents } from "../agents/service";
 import type { PortableAgent } from "../agents/native";
 import type { MentionRecipient } from "./mention-draft";
@@ -214,6 +215,7 @@ export function useOldAgentMentions(
 
 function describe(found: readonly PortableAgent[], adopts: boolean) {
   const one = found.length === 1;
+  const spheres = appName() === "Spheres";
   const names = found.map((agent) => agent.name).join(", ");
   const kept = one
     ? adopts
@@ -222,9 +224,9 @@ function describe(found: readonly PortableAgent[], adopts: boolean) {
     : adopts
       ? "names, avatars, and instructions"
       : "names and avatars";
-  return `${names} ${one ? "is" : "are"} set up in the preview version of Buzz. Are you ready to import ${
+  return `${names} ${one ? "is" : "are"} set up in ${spheres ? "the previous app" : "the preview version of Buzz"}. Are you ready to import ${
     one ? "it" : "them"
-  } to Buzz 1.0? This will keep ${one ? "its" : "their"} ${kept} and start running ${
+  } to ${spheres ? appName() : "Buzz 1.0"}? This will keep ${one ? "its" : "their"} ${kept} and start running ${
     one ? "it" : "them"
   } in this app.`;
 }

@@ -1,4 +1,4 @@
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 import {
   communityDestination,
   enteredRelayOrigin,
@@ -6,6 +6,20 @@ import {
   relayOrigin,
   parseCommunityAliases,
 } from "./destination";
+
+it("opens saved Bellboy workspace addresses at the Spheres deployment", () => {
+  vi.stubEnv("VITE_BUZZ_PACKAGED_COMMUNITY", "https://hellospheres.com");
+  try {
+    const canonical = communityDestination("https://hellospheres.com");
+    expect(communityDestination("wss://buzz.askbellboy.com/")).toEqual(canonical);
+    expect(enteredRelayOrigin("buzz.askbellboy.com")).toBe(canonical.url);
+    expect(relayAddress("https://buzz.askbellboy.com")).toBe(
+      "wss://hellospheres.com",
+    );
+  } finally {
+    vi.unstubAllEnvs();
+  }
+});
 
 it.each([
   ["primary", "wss://primary.example"],

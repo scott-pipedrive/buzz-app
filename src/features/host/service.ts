@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { Channel, invoke, isTauri } from "@tauri-apps/api/core";
 import { Service, type Context } from "@deepseek-ai/cordis";
 import type {} from "../../plugins/api";
@@ -597,7 +598,7 @@ export class HostService extends Service implements Host {
     } = request;
     const owner = this.ctx.pluginOwner;
     if (!owner || !isTauri())
-      throw new Error("External authorization requires Buzz desktop");
+      throw new Error(`External authorization requires ${appName()} desktop`);
     await invoke<void>("plugin_host_mcp_authorize", {
       id: owner.id,
       revision: owner.revision,
@@ -612,7 +613,7 @@ export class HostService extends Service implements Host {
   ): Promise<McpPairing | null> {
     const owner = this.ctx.pluginOwner;
     if (!owner || !isTauri())
-      throw new Error("External approval requires Buzz desktop");
+      throw new Error(`External approval requires ${appName()} desktop`);
     return invoke<McpPairing | null>("plugin_host_mcp_pairing", {
       id: owner.id,
       revision: owner.revision,

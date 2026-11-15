@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { useEffect, useRef, useState } from "react";
 import { AlertDialog } from "../../shared/design-system/ui/AlertDialog";
 import { Button } from "../../shared/design-system/ui/Button";
@@ -84,7 +85,7 @@ export function PairingPrompt({
     <AlertDialog
       title={
         <>
-          <strong>{request.client}</strong> wants to use Buzz as you on{" "}
+          <strong>{request.client}</strong>{` wants to use ${appName()} as you on`}{" "}
           <strong>{request.relay}</strong>
         </>
       }

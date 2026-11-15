@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { useSoloNavigation } from "../../features/channel-navigation/solo-navigation-react";
 import {
   type ComponentProps,
@@ -208,7 +209,7 @@ export function NewWorkspaceDialog({
         if (!open) close();
       }}
       title="Create new workspace"
-      description={`Move ${name} into a personal workspace that syncs across Buzz.`}
+      description={`Move ${name} into a personal workspace that syncs across ${appName()}.`}
       initialFocus={input}
       finalFocus={finalFocus}
       actions={

@@ -134,6 +134,10 @@ export default defineConfig(async ({ command, mode }) => {
   // Keep this separate from the live development broker and its opt-in flags.
   const packagedRelay =
     command === "build" ? env.BUZZ_DEFAULT_COMMUNITY_URL?.trim() : "";
+  const joinOnboarding =
+    sharedBuildValue("BUZZ_BUILD_JOIN_ONBOARDING") === "1" &&
+    federatedUrl === undefined &&
+    !builderlabUrl;
   const openOrigin = packagedRelay
     ? relayOrigin(packagedRelay)
     : openRelay
@@ -221,7 +225,15 @@ export default defineConfig(async ({ command, mode }) => {
         JSON.stringify(env.BUZZ_BUILDERLAB_APPS_DOMAIN) ?? "undefined",
       "import.meta.env.VITE_BUZZ_BUILDERLAB_APPS_CONTROL_PLANE":
         JSON.stringify(appsControlPlane),
-      "import.meta.env.VITE_BUZZ_OPEN_RELAY": JSON.stringify(openOrigin),
+      "import.meta.env.VITE_BUZZ_OPEN_RELAY": JSON.stringify(
+        packagedRelay && joinOnboarding ? "" : openOrigin,
+      ),
+      "import.meta.env.VITE_BUZZ_PACKAGED_COMMUNITY": JSON.stringify(
+        packagedRelay ? openOrigin : "",
+      ),
+      "import.meta.env.VITE_BUZZ_JOIN_ONBOARDING": JSON.stringify(
+        joinOnboarding ? "1" : "0",
+      ),
       "import.meta.env.VITE_BUZZ_DATABRICKS_HOST":
         JSON.stringify(databricksHost),
       "import.meta.env.VITE_BUZZ_MOBILE_APP_IOS_URL": JSON.stringify(mobileIos),
@@ -235,6 +247,9 @@ export default defineConfig(async ({ command, mode }) => {
         input: {
           main: fileURLToPath(new URL("index.html", import.meta.url)),
           huddle: fileURLToPath(new URL("huddle.html", import.meta.url)),
+          spheresWelcome: fileURLToPath(
+            new URL("spheres-welcome.html", import.meta.url),
+          ),
           compute: fileURLToPath(
             new URL("compute-widget.html", import.meta.url),
           ),

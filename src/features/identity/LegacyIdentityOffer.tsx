@@ -1,3 +1,4 @@
+import { appName, previousAppName } from "../../shared/app-name";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { AlertDialog } from "../../shared/design-system/ui/AlertDialog";
 import { Button } from "../../shared/design-system/ui/Button";
@@ -35,8 +36,8 @@ export function useLegacyIdentityOffer(identity: Identity, open: boolean) {
   const dismiss = () => setOffered(false);
   return (
     <AlertDialog
-      title="Continue with your Buzz identity?"
-      description="Old Buzz was used on this device. Continue with the identity it saved instead of setting up a new one. Your computer may ask you to allow access."
+      title={`Continue with your ${appName() === "Spheres" ? "existing" : appName()} identity?`}
+      description={`${previousAppName(true)} was used on this device. Continue with the identity it saved instead of setting up a new one. Your computer may ask you to allow access.`}
       onClose={dismiss}
       pending={state.busy}
       initialFocus={proceed}

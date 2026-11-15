@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { workflowLabel } from "../relay/workflow-attribution";
 import type { ChannelSummary, Profile } from "../relay/contracts";
 import type { IncomingMessage } from "../relay/incoming";
@@ -94,7 +95,7 @@ export function pluginNotificationText(
   label: string,
 ): NotificationText {
   return Object.freeze({
-    title: shortText(input.title ?? "", 128) || "Buzz",
+    title: shortText(input.title ?? "", 128) || appName(),
     body: plainText(input.body ?? "") || `New ${label.toLowerCase()}`,
   });
 }

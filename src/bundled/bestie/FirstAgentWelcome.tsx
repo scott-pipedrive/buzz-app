@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { useEffect, useSyncExternalStore } from "react";
 import { useAgentPortraitSource } from "../agents/AgentCard";
 import messageStyles from "../../features/messages/Messages.module.css";
@@ -60,7 +61,7 @@ export function FirstAgentWelcome({
     <article
       className={`${messageStyles.message} ${styles.welcome}`}
       data-layout="timeline"
-      aria-label="Welcome to Buzz"
+      aria-label={`Welcome to ${appName()}`}
     >
       <span className={messageStyles.messageGutter} />
       <div className={messageStyles.messageBody}>
@@ -84,15 +85,14 @@ export function FirstAgentWelcome({
           </div>
           <div className={messageStyles.messageBubble}>
             <div className={messageStyles.text}>
-              <h3>Welcome to Buzz!</h3>
+              <h3>{`Welcome to ${appName()}!`}</h3>
               <p>
                 Since I’m your first agent, you can find me at the top of the
                 left sidebar. As you create more agents, you can change who
                 shows up there by making a different one your Bestie.
               </p>
               <p>
-                In addition to any instructions you’ve given me during setup, I
-                can also answer questions about working in Buzz.
+                {`In addition to any instructions you’ve given me during setup, I can also answer questions about working in ${appName()}.`}
               </p>
               <p>Ask away, or tell me what you’d like to work on.</p>
             </div>

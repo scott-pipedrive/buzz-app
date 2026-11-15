@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { isTauri } from "@tauri-apps/api/core";
 import { getVersion } from "@tauri-apps/api/app";
 import { imageType } from "../../features/relay/attachment-limits";
@@ -41,7 +42,7 @@ export async function feedbackDiagnostics(now = new Date()): Promise<File> {
   }
   const nav = typeof navigator === "undefined" ? undefined : navigator;
   const content = [
-    "Buzz feedback diagnostics",
+    `${appName()} feedback diagnostics`,
     `captured: ${now.toISOString()}`,
     `app version: ${version}`,
     `platform: ${nav?.platform ?? "unknown"}`,

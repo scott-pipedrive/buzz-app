@@ -1,5 +1,6 @@
 // Pi's New agent choices and agent settings. Providers, their keys and their
 // models are Pi's own: listed from it, and keys saved with its login.
+import { appName } from "../../shared/app-name";
 import {
   useEffect,
   useId,
@@ -254,7 +255,7 @@ export function createTabs({
             ? { error: listing.error }
             : unknown
               ? {
-                  error: `${unknown} isn't one of Pi's built-in providers, and no Pi package Buzz loaded adds it. Choose another.`,
+                  error: `${unknown} isn't one of Pi's built-in providers, and no Pi package ${appName()} loaded adds it. Choose another.`,
                 }
               : listing.status === "loading" && !providers
                 ? { description: "Loading Pi's providers…" }

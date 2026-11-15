@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { AgentAvatarArtworkProvider } from "../../features/agents/AgentAvatarArtworkProvider";
 import "../../shared/styles/globals.css";
 import "@fontsource-variable/inter/wght.css";
@@ -10,6 +11,8 @@ import type { HuddleAction, HuddleView } from "../../features/huddle/window";
 import { HuddleWindowView } from "./HuddleWindowView";
 import { useKeyboardFocusVisibility } from "../../shared/design-system/useKeyboardFocusVisibility";
 import { clearReactDevMeasures } from "../../features/developer/react-dev-timing";
+
+document.title = `Huddle — ${appName()}`;
 
 // React dev builds otherwise fill the User Timing buffer without limit.
 if (import.meta.env.DEV) clearReactDevMeasures();
@@ -34,7 +37,7 @@ function Companion() {
     };
     void invoke("huddle_window_watch", { updates }).catch(() => {
       if (mounted)
-        setError("This Huddle window is unavailable. Reopen it from Buzz.");
+        setError(`This Huddle window is unavailable. Reopen it from ${appName()}.`);
     });
     return () => {
       mounted = false;
@@ -44,7 +47,7 @@ function Companion() {
     if (!view) return;
     setError(undefined);
     void invoke("huddle_window_action", { id: view.id, action, text }).catch(
-      () => setError("Couldn’t update the call. Try again from Buzz."),
+      () => setError(`Couldn’t update the call. Try again from ${appName()}.`),
     );
   };
   return view ? (

@@ -2,6 +2,7 @@
 // change that starts or deletes plugin code is a request the person using
 // Buzz confirms on a card in the agent's conversation, or in Settings, since
 // plugins are not sandboxed.
+import { appName } from "../shared/app-name";
 import { gitScope } from "./git-scope";
 import { samePluginRelease } from "./same-release";
 import type {
@@ -154,7 +155,7 @@ export function createPluginRequests({
       );
     if (buzzHosted(repository))
       throw new Error(
-        "Ask your owner to add plugins from Buzz-hosted repositories in Settings",
+        `Ask your owner to add plugins from ${appName()}-hosted repositories in Settings`,
       );
     const scope = gitScope(commit, path);
     const preview = scope.length
@@ -235,7 +236,7 @@ export function createPluginRequests({
     if (input.action === "remove" && bundled)
       throw new Error("Bundled plugins cannot be removed");
     if (input.action !== "update") return { pluginId: id, pluginName: name };
-    if (bundled) throw new Error("Bundled plugins update with Buzz");
+    if (bundled) throw new Error(`Bundled plugins update with ${appName()}`);
     unmanaged(id);
     const recorded = plugin.updateSource;
     if (!recorded || !("repository" in recorded))

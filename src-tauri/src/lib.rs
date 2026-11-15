@@ -1,3 +1,5 @@
+const DISPLAY_NAME: &str = env!("BUZZ_DISPLAY_NAME");
+
 mod archive;
 #[cfg(test)]
 mod build_resources;

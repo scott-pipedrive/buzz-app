@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import {
   useLayoutEffect,
   useRef,
@@ -24,7 +25,7 @@ const sections = [
     id: "agents",
     title: "Remote agents",
     icon: RobotIcon,
-    description: "Agents take on work for you in Buzz.",
+    description: `Agents take on work for you in ${appName()}.`,
     action: "Set up an agent",
   },
   {

@@ -1,4 +1,5 @@
 import { useCallback, useLayoutEffect, useRef } from "react";
+import { appName } from "../../shared/app-name";
 
 /** Only transfer focus when it belonged to the request being replaced. */
 export function useHuddleRequestFocus(
@@ -20,7 +21,7 @@ export function useHuddleRequestFocus(
       // Cancel/failure removes the request. Search survives it in the main app;
       // the native companion closes and returns focus to its owning window.
       document
-        .querySelector<HTMLButtonElement>('[aria-label="Search Buzz"]')
+        .querySelector<HTMLButtonElement>(`[aria-label="Search ${appName()}"]`)
         ?.focus({ preventScroll: true });
       retry.current = document.activeElement;
     }

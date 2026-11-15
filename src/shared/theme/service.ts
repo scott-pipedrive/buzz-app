@@ -7,6 +7,7 @@ import {
   LEGACY_BUBBLE_KEY,
   parseAccent,
   parseLegacyBubbleColor,
+  SPHERES_ACCENT,
   type Accent,
 } from "./accent";
 /** Host-owned, device-local appearance. Never depends on plugin/relay readiness. */
@@ -61,6 +62,10 @@ export interface AppearanceSnapshot {
 export function createAppearance(
   host: Window | undefined = typeof window === "undefined" ? undefined : window,
 ) {
+  const defaultAccent =
+    host?.document.documentElement.dataset.spheres !== undefined
+      ? SPHERES_ACCENT
+      : DEFAULT_ACCENT;
   const systemScheme = host?.matchMedia?.("(prefers-color-scheme: dark)");
   const resolvedMode = (preference: ColorModePreference): ColorMode =>
     preference === "system"
@@ -76,7 +81,7 @@ export function createAppearance(
     messageWidthError: null,
     fontScale: 1,
     fontError: null,
-    accent: DEFAULT_ACCENT,
+    accent: defaultAccent,
     accentError: null,
     contrast: "low",
     contrastError: null,
@@ -198,9 +203,10 @@ export function createAppearance(
         ...state,
         accent:
           saved != null
-            ? parseAccent(saved)
+            ? parseAccent(saved, defaultAccent)
             : parseLegacyBubbleColor(
                 host?.localStorage.getItem(LEGACY_BUBBLE_KEY),
+                defaultAccent,
               ),
         accentError: null,
       };
@@ -355,7 +361,7 @@ export function createAppearance(
     },
     setAccent(value: Accent) {
       if (disposed) return;
-      const accent = parseAccent(value);
+      const accent = parseAccent(value, defaultAccent);
       let accentError: string | null = null;
       try {
         if (!host) throw new Error("No browser storage");

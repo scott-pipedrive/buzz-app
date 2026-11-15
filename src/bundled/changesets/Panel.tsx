@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { useEffect, useMemo, useState } from "react";
 import type { PanelProps } from "../../features/panels/service";
 import {
@@ -50,7 +51,7 @@ export function ChangesetPanel({
     [patch.value],
   );
   if (!link || !found)
-    return <p role="alert">This changeset was recorded in another Buzz.</p>;
+    return <p role="alert">{`This changeset was recorded in another ${appName()}.`}</p>;
   const pending = listed.error === undefined && !files;
   const step = (by: number) => files && setChosen(files[index + by]?.path);
   return (

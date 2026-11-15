@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
-import { avatarAnimation, type agentAvatars } from "./avatar-packs";
+import { avatarAnimation, type PackAvatar } from "./avatar-packs";
 
 // The outgoing view stays mounted during a shared-layout transition. Read its
 // current frame when the incoming video is ready instead of restarting at zero.
@@ -45,7 +45,7 @@ export function PackedAgentAvatar({
   avatar,
   fit = "contain",
 }: {
-  avatar: (typeof agentAvatars)[number];
+  avatar: PackAvatar;
   fit?: "contain" | "cover";
 }) {
   const reducedMotion = useSyncExternalStore(

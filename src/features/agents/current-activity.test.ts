@@ -78,6 +78,7 @@ it("projects safe brief tool status from exact current owner-visible work only",
   const live = snapshot();
   expect(project(live).get(agent)).toEqual({
     label: "Editing index.html",
+    phase: "working",
     detailAvailability: "available",
     roots: [root],
   });
@@ -98,6 +99,7 @@ it("drops owner-only work when not listening without hiding valid public typing"
     ),
   ).toEqual({
     label: "Working",
+    phase: "working",
     detailAvailability: "typing-only",
     roots: [root],
   });
@@ -164,6 +166,7 @@ it("does not merge labels or ownership across roots or expired turns", () => {
     ),
   ).toEqual({
     label: "Working",
+    phase: "working",
     detailAvailability: "typing-only",
     roots: [otherRoot],
   });

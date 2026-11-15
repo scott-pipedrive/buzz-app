@@ -1,4 +1,5 @@
 // FOUNDATION: Startup, navigation, contributed pages, and built-in Settings.
+import { appName } from "../shared/app-name";
 import { AgentAvatarArtworkProvider } from "../features/agents/AgentAvatarArtworkProvider";
 import { Welcome } from "../features/identity/Welcome";
 import { NewMenu } from "./shell/NewMenu";
@@ -74,6 +75,10 @@ import { AgentCompletionNotifications } from "../features/notifications/AgentCom
 export function App({ services }: { services: AppServices }) {
   const identity = services.identity;
   const launching = useSyncExternalStore(subscribeLaunch, launchVisible);
+  const pendingInvite = useSyncExternalStore(
+    services.invites.subscribe,
+    services.invites.snapshot,
+  );
   useEffect(() => {
     if (!identity) return;
     const update = () => {
@@ -95,6 +100,7 @@ export function App({ services }: { services: AppServices }) {
             identity={services.identity}
             communities={services.communities}
             invites={services.invites}
+            pendingInvite={pendingInvite}
             federatedIdentity={services.firstRunFederatedIdentity}
           >
             <LaunchSignIn identity={services.federatedIdentity}>
@@ -352,14 +358,19 @@ function ConnectedAppContent({ services }: { services: AppServices }) {
   // Keep the parser launch surface through local bootstrap, not network refresh.
   if (!settings && restoring)
     return document.getElementById("buzz-launch") ? null : (
-      <div className="buzz-launch" role="status" aria-label="Opening Buzz">
+      <div className="buzz-launch" role="status" aria-label={`Opening ${appName()}`}>
         <LoadingWindowHeader />
         <picture>
           <source
             media="(prefers-reduced-motion: reduce)"
-            srcSet="/buzz-mark.svg"
+            srcSet={appName() === "Spheres" ? "/spheres-mark.svg" : "/buzz-mark.svg"}
           />
-          <img src="/buzz-loading-mark.svg" alt="Buzz" width="72" height="72" />
+          <img
+            src={appName() === "Spheres" ? "/spheres-loading-mark.svg" : "/buzz-loading-mark.svg"}
+            alt={appName()}
+            width="72"
+            height="72"
+          />
         </picture>
       </div>
     );
@@ -555,7 +566,7 @@ function ConnectedAppContent({ services }: { services: AppServices }) {
         <EmptyState
           icon={<WarningCircleIcon />}
           title="This page isn’t available"
-          description="It may have been removed, or you may need to update Buzz."
+          description={`It may have been removed, or you may need to update ${appName()}.`}
           action={
             <>
               {messagesButton("primary")}

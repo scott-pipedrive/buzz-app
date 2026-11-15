@@ -189,6 +189,55 @@ test("the loaded card reveals once, keeps actions available, and respects reduce
   await expect(page.getByRole("dialog", { name: "Share Ada" })).toBeVisible();
 });
 
+test("Spheres exports its paper card with the Spheres mark and transparent portrait", async ({
+  page,
+}) => {
+  await page.goto(`${url}?spheres&theme=dark&pack`);
+  await page
+    .getByRole("button", { name: "Export Ada as an agent card" })
+    .click();
+  const image = page.locator('[data-ready="true"]').getByRole("img");
+  await expect(image).toBeVisible();
+  const artwork = await image.evaluate((img) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+    const pixel = (x, y) => [...ctx.getImageData(x, y, 1, 1).data];
+    return {
+      size: [canvas.width, canvas.height],
+      paper: pixel(130, 130),
+      cyan: pixel(84, 82),
+      portraitMargin: pixel(148, 216),
+      portraitInk: pixel(410, 570),
+    };
+  });
+  expect(artwork.size).toEqual([820, 1230]);
+  expect(artwork.paper).toEqual([255, 250, 243, 255]);
+  expect(artwork.cyan).toEqual([0, 162, 207, 255]);
+  expect(artwork.portraitMargin).toEqual(artwork.paper);
+  expect(artwork.portraitInk[0]).toBeGreaterThan(240);
+  expect(artwork.portraitInk[2]).toBeLessThan(16);
+  const preview = await image.evaluate(async (img) => [
+    ...new Uint8Array(await (await fetch(img.src)).arrayBuffer()),
+  ]);
+  const saving = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Save card" }).click();
+  const download = await saving;
+  expect(download.suggestedFilename()).toBe("Ada.agent.png");
+  const stream = await download.createReadStream();
+  const chunks = [];
+  for await (const chunk of stream) chunks.push(chunk);
+  const file = Buffer.concat(chunks);
+  const manifest = file.indexOf("buzz_agent_snapshot\0");
+  expect(manifest).toBeGreaterThan(0);
+  // Inserting the tEXt chunk retains all displayed artwork bytes.
+  expect(file.subarray(0, manifest - 8)).toEqual(
+    Buffer.from(preview.slice(0, manifest - 8)),
+  );
+});
+
 // Canvas sampling, composited border lighting, and pointer geometry are browser behavior.
 test("the portrait colors the exported foil and the directional hover light", async ({
   page,

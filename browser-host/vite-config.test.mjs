@@ -142,6 +142,18 @@ it("loads the broker's Vite config without native-compatibility warnings", () =>
               );
             }
             delete process.env.BUZZ_DEFAULT_COMMUNITY_URL;
+            process.env.BUZZ_BUILD_JOIN_ONBOARDING = '1';
+            process.env.BUZZ_BUILD_FEDERATED_IDENTITY_CONFIG = '';
+            process.env.BUZZ_BUILDERLAB_URL = '';
+            const onboarding = await loadConfigFromFile(
+              { command: 'build', mode: 'production' }, configFile,
+            );
+            assert.equal(onboarding.config.define['import.meta.env.VITE_BUZZ_JOIN_ONBOARDING'], '"1"');
+            assert.equal(onboarding.config.define['import.meta.env.VITE_BUZZ_PACKAGED_COMMUNITY'], '"https://packaged.example.com"');
+            assert.equal(onboarding.config.define['import.meta.env.VITE_BUZZ_OPEN_RELAY'], '""');
+            delete process.env.BUZZ_BUILD_JOIN_ONBOARDING;
+            delete process.env.BUZZ_BUILD_FEDERATED_IDENTITY_CONFIG;
+            delete process.env.BUZZ_BUILDERLAB_URL;
             // A packaged Databricks workspace reaches goose verbatim; invalid hosts
             // fail the build without echoing credentials.
             for (const [command, host, expected] of [

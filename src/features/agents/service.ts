@@ -1,3 +1,4 @@
+import { appName, previousAppName } from "../../shared/app-name";
 import { followUpQueue } from "../messages/follow-up-queue";
 import {
   createSessionAdmissions,
@@ -2177,7 +2178,7 @@ export class AgentsService extends Service implements Agents {
           const type = this.types().find((type) => type.key === agent.type);
           if (!type?.retire)
             throw new Error(
-              "This runtime cannot safely change protection while Buzz is open",
+              `This runtime cannot safely change protection while ${appName()} is open`,
             );
           await this.runners.retype(agent.key, agent.name, async () => {
             if (policy !== null)
@@ -2950,7 +2951,7 @@ export class AgentsService extends Service implements Agents {
       typeof tool.call !== "function"
     )
       throw new Error(
-        "Agent tools need a lowercase name no Buzz tool has, a description, a JSON object inputSchema and call",
+        `Agent tools need a lowercase name no ${appName()} tool has, a description, a JSON object inputSchema and call`,
       );
     // Reserved from registration, not activation: plugins starting together
     // are not active yet, and the second to take a name must fail.
@@ -3007,7 +3008,7 @@ export class AgentsService extends Service implements Agents {
       )
     )
       throw new Error(
-        "Attention command sources are built into Buzz. Update the Attention UI plugin.",
+        `Attention command sources are built into ${appName()}. Update the Attention UI plugin.`,
       );
     if (
       !plugin ||
@@ -3412,16 +3413,16 @@ export class AgentsService extends Service implements Agents {
     scopes: readonly ExternalScope[],
   ) {
     if (this.ctx.pluginOwner?.id !== "buzz.agents")
-      throw new Error("Authorize external apps in Buzz.");
+      throw new Error(`Authorize external apps in ${appName()}.`);
     const host = this.ctx.host;
     if (!host?.serveMcp)
-      throw new Error("External connections require Buzz desktop.");
+      throw new Error(`External connections require ${appName()} desktop.`);
     // A run's handle: the app acts as the agent itself, with its settings,
     // plugin requests and handoff, not as a plugin acting through it. Its
     // wakes say they came from the app, not from the agent's conversations.
     const run = this.runners.handle(key, undefined, true);
     if (!run)
-      throw new Error("This agent is not running in this copy of Buzz.");
+      throw new Error(`This agent is not running in this copy of ${appName()}.`);
     // Workspace filing is for local turns, not an external app's run authority.
     const { soloWorkspaces: _, ...external } = run;
     const { handoff } = external;
@@ -3470,7 +3471,7 @@ export class AgentsService extends Service implements Agents {
           .selectable.some((agent) => agent.pubkey === handle.pubkey)
       )
         throw new Error(
-          "The external connection has ended. Authorize the external app again in Buzz.",
+          `The external connection has ended. Authorize the external app again in ${appName()}.`,
         );
     };
     const changed = () => {
@@ -3554,7 +3555,7 @@ export class AgentsService extends Service implements Agents {
                       JSON.stringify(scopes))
                 )
                   throw new Error(
-                    "Buzz approval does not match the selected identity and access.",
+                    `${appName()} approval does not match the selected identity and access.`,
                   );
                 return authorize(nativeRequest);
               },
@@ -4266,7 +4267,7 @@ export class AgentsService extends Service implements Agents {
         continue;
       }
       if (!listed.has(member.pubkey)) {
-        failed.push({ name, error: "No longer available in old Buzz" });
+        failed.push({ name, error: `No longer available in ${previousAppName()}` });
         continue;
       }
       // Checked with no wait before the import starts.
@@ -4659,7 +4660,7 @@ export class AgentsService extends Service implements Agents {
       this.sessionState(key, place) === "unavailable"
     )
       throw new Error(
-        "Use session controls in the Buzz app that runs this agent.",
+        `Use session controls in the ${appName()} app that runs this agent.`,
       );
     await this.runners.control(key, async () => {
       const current = shown();
@@ -5040,7 +5041,7 @@ export class AgentsService extends Service implements Agents {
       }
     if (failed.length)
       throw new Error(
-        `${identity.name} was deleted, but Buzz couldn't clear it as your Bestie in ${failed.join(", ")}. Open Bestie to choose another.`,
+        `${identity.name} was deleted, but ${appName()} couldn't clear it as your Bestie in ${failed.join(", ")}. Open Bestie to choose another.`,
       );
   }
   /** Archives the config channel in the agent's home community, which it is
@@ -5309,7 +5310,7 @@ export class AgentsService extends Service implements Agents {
         await handOnMainAgent(binding.session, pubkey);
       } catch {
         throw new Error(
-          `${agent.name} was deleted, but Buzz couldn't clear it as your Bestie. Open Bestie to choose another.`,
+          `${agent.name} was deleted, but ${appName()} couldn't clear it as your Bestie. Open Bestie to choose another.`,
         );
       }
     });

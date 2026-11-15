@@ -4,6 +4,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import { appName } from "../../shared/app-name";
 import type { FederatedIdentity } from "../../features/federated-identity/service";
 import type { BuilderlabPhone } from "../../features/identity/builderlab-account";
 import { QrCode, renderQrCode, useQrVariant } from "../../shared/QrCode";
@@ -142,13 +143,14 @@ function GetTheApp({
   email: string | null;
   stores: readonly Store[];
 }) {
+  const spheres = appName() === "Spheres";
   return (
     <section aria-labelledby="mobile-app-title" className="min-w-0">
       <h2 id="mobile-app-title" className="mt-0 mb-2 text-label">
-        Get Buzz on your phone
+        {spheres ? "Get the mobile app" : "Get Buzz on your phone"}
       </h2>
       <p className="mt-0 mb-6 text-body-sm text-muted">
-        {`Install Buzz on your phone${stores.length ? "" : " from its app store"}, then sign in with Builderlab${email ? ` as ${email}` : ""}.`}
+        {`Install ${spheres ? "the compatible mobile app" : "Buzz"} on your phone${stores.length ? "" : " from its app store"}, then sign in with Builderlab${email ? ` as ${email}` : ""}.`}
       </p>
       {stores.length > 0 && (
         <ul className="m-0 flex list-none flex-wrap gap-6 p-0">
@@ -185,7 +187,7 @@ function StoreCode({ store }: { store: Store }) {
       {code?.svg ? (
         <QrCode
           svg={code.svg}
-          alt={`Scan with your phone to get Buzz from ${store.name}`}
+          alt={`Scan with your phone to get ${appName() === "Spheres" ? "the mobile app" : "Buzz"} from ${store.name}`}
         />
       ) : (
         !code && (

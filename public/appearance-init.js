@@ -13,7 +13,9 @@
     // Storage may be denied; the system palette still opens safely.
   }
   document.documentElement.dataset.colorMode = mode;
-  let accent = "citrus";
+  let accent = document.documentElement.dataset.spheres !== undefined
+    ? "spheres-ink"
+    : "citrus";
   try {
     const accents = ["bee", "magenta", "iris", "cobalt", "citrus", "mono"];
     let value = localStorage.getItem("buzz-accent.v1");

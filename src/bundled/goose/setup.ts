@@ -2,6 +2,7 @@
 // models, saving a provider's key, and testing that a provider answers. Each
 // call runs a short-lived `goose-acp`; keys go to goose's secret store, never
 // into Buzz.
+import { appName } from "../../shared/app-name";
 import type { ModelChoice } from "../../features/agents/ModelPicker";
 import { withProviderWords } from "../../features/agents/failure-words";
 import type {
@@ -581,7 +582,7 @@ export class GooseSetup {
       const session = await goose.open({
         cwd,
         // A titled session spares the provider a naming call.
-        title: "Buzz connection test",
+        title: `${appName()} connection test`,
         systemPrompt: "",
         choice: () => choice,
       });

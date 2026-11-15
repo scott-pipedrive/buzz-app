@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { writeJSON } from "../../features/agent-protection/json-stream";
 // The Pi host (host.mjs): one process for every Pi agent here, started when
 // something needs it, spoken to over stdio, one JSON message a line. Requests
@@ -375,7 +376,7 @@ export class Pi {
           try {
             handle(JSON.parse(line));
           } catch (error) {
-            console.warn("Pi sent a message Buzz could not read", error);
+            console.warn(`Pi sent a message ${appName()} could not read`, error);
           }
         }
       },

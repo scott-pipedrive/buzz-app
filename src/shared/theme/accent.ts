@@ -4,13 +4,19 @@ import { ACCENTS } from "../design-system/tokens/brand";
 // Device-local color for messages, send and sidebar row states.
 // Shared controls stay neutral; contrast changes message bubbles.
 export { ACCENTS };
-export type Accent = (typeof ACCENTS)[number];
+export const SPHERES_ACCENT = "spheres-ink";
+export const SPHERES_ACCENTS = [SPHERES_ACCENT, ...ACCENTS] as const;
+type BuzzAccent = (typeof ACCENTS)[number];
+export type Accent = (typeof SPHERES_ACCENTS)[number];
 export const DEFAULT_ACCENT: Accent = "citrus";
 export const ACCENT_KEY = "buzz-accent.v1";
 /** The former message-bubble preference; read once when no accent is saved. */
 export const LEGACY_BUBBLE_KEY = "buzz-bubble-color.v1";
 
-export function parseAccent(value: unknown): Accent {
+export function parseAccent(
+  value: unknown,
+  fallback: Accent = DEFAULT_ACCENT,
+): Accent {
   if (
     value === "chartreuse" ||
     value === "lime" ||
@@ -20,7 +26,9 @@ export function parseAccent(value: unknown): Accent {
     return "citrus";
   if (value === "flame") return "bee";
   if (value === "gray") return "mono";
-  return ACCENTS.includes(value as Accent) ? (value as Accent) : DEFAULT_ACCENT;
+  return ACCENTS.includes(value as BuzzAccent)
+    ? (value as BuzzAccent)
+    : fallback;
 }
 
 /** A saved bubble color carries over to its accent; its old "Default" does not. */
@@ -35,10 +43,13 @@ const LEGACY_BUBBLE_ACCENTS: Readonly<Record<string, Accent>> = {
   lilac: "iris",
   purple: "iris",
 };
-export function parseLegacyBubbleColor(value: unknown): Accent {
+export function parseLegacyBubbleColor(
+  value: unknown,
+  fallback: Accent = DEFAULT_ACCENT,
+): Accent {
   return (
     (typeof value === "string" ? LEGACY_BUBBLE_ACCENTS[value] : undefined) ??
-    DEFAULT_ACCENT
+    fallback
   );
 }
 

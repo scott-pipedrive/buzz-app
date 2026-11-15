@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import type { Agents } from "./service";
 
 type Provider = Readonly<{
@@ -21,7 +22,7 @@ export function registerDiscovery(agents: {
     async call() {
       if (!agents.attentionProviders)
         throw new Error(
-          "Update Buzz to a version with Attention provider discovery.",
+          `Update ${appName()} to a version with Attention provider discovery.`,
         );
       return JSON.stringify({ providers: agents.attentionProviders() });
     },

@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 /** What a local Bestie can have on. Each feature is a marked, versioned
  * section of the agent's instructions, so its state is whether the section
  * is there, and a later version can replace it. A check-in also has a timer
@@ -54,7 +55,7 @@ export const checkinHourly: Feature = {
   id: "checkin.hourly",
   title: "Every hour",
   description:
-    "Bestie wakes once an hour to tidy its memory and tell you only what matters. Runs while Buzz is open and the Watching plugin is on. Each wake uses your tokens. Turning this on also runs Bestie's other watches.",
+    `Bestie wakes once an hour to tidy its memory and tell you only what matters. Runs while ${appName()} is open and the Watching plugin is on. Each wake uses your tokens. Turning this on also runs Bestie's other watches.`,
   version: 1,
   requires: "memory",
   timer: {

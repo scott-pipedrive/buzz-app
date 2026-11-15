@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import type { Agent, Agents } from "../../features/agents/service";
 import { randomAgentAvatar } from "../../features/agents/avatar-packs";
 import type { RelayData, RelaySnapshot } from "../../features/relay/service";
@@ -142,7 +143,7 @@ export function createRemoteBestie(
       if (!current) {
         publish({
           status: "unavailable",
-          message: "Sign in to Buzz and choose a community to set up Bestie.",
+          message: `Sign in to ${appName()} and choose a community to set up Bestie.`,
         });
         return;
       }
@@ -556,7 +557,7 @@ export function createRemoteBestie(
     if (!record.welcomeId) {
       record.welcomeId = session.messages.send(
         record.channelId,
-        "🤖 Sent by Bestie setup: @Bestie, introduce yourself and help me get started with Buzz.",
+        `🤖 Sent by Bestie setup: @Bestie, introduce yourself and help me get started with ${appName()}.`,
         [pubkey],
         [],
         { key: `bestie-welcome:${record.channelId}`, value: pubkey },

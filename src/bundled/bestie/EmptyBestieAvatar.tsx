@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { agentAvatars, avatarPacks } from "../../features/agents/avatar-packs";
+import {
+  agentAvatarChoices,
+  agentAvatars,
+  avatarPacks,
+} from "../../features/agents/avatar-packs";
+import { appName } from "../../shared/app-name";
 import { RobotIcon } from "../../shared/design-system/icons";
 import { Avatar } from "../../shared/design-system/ui/Avatar";
 import styles from "./EmptyBestieAvatar.module.css";
@@ -8,7 +13,7 @@ import styles from "./EmptyBestieAvatar.module.css";
 const packs = ["fuzzies", "gloopies", "figgies"].map(
   (id) => avatarPacks.find((pack) => pack.id === id)?.avatarIds ?? [],
 );
-const characters = Array.from(
+const buzzCharacters = Array.from(
   { length: Math.max(...packs.map((pack) => pack.length)) },
   (_, index) => packs.flatMap((pack) => pack[index] ?? []),
 )
@@ -20,6 +25,8 @@ const characters = Array.from(
 
 /** An invitation, not an agent identity. Never plays videos or starts setup. */
 export function EmptyBestieAvatar({ compact = false }: { compact?: boolean }) {
+  const characters =
+    appName() === "Spheres" ? agentAvatarChoices() : buzzCharacters;
   const [index, setIndex] = useState(0);
   const container = useRef<HTMLSpanElement>(null);
   useEffect(() => {
@@ -41,7 +48,7 @@ export function EmptyBestieAvatar({ compact = false }: { compact?: boolean }) {
       media?.removeEventListener("change", update);
       document.removeEventListener("visibilitychange", update);
     };
-  }, []);
+  }, [characters.length]);
   return (
     <span
       ref={container}

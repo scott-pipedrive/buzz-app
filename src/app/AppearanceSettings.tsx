@@ -1,5 +1,10 @@
 import { Select } from "../shared/design-system/ui/Select";
-import { ACCENTS, accentButtonStyle } from "../shared/theme/accent";
+import { appName } from "../shared/app-name";
+import {
+  ACCENTS,
+  SPHERES_ACCENTS,
+  accentButtonStyle,
+} from "../shared/theme/accent";
 
 import { IconButton } from "../shared/design-system/ui/IconButton";
 import {
@@ -76,6 +81,8 @@ export function AppearanceSettings({
   autocorrectAvailable?: boolean;
   communities?: Pick<Communities, "relay"> | undefined;
 }) {
+  const spheres = appName() === "Spheres";
+  const contrastLabel = spheres ? "Message color" : "Vibe level";
   const followUp = useFollowUpBehaviorPreference();
   const autocorrect = useMessageAutocorrectPreference();
   const unreadFirst = useUnreadFirstPreference();
@@ -205,11 +212,13 @@ export function AppearanceSettings({
                   data-accent-colors
                   className="grid auto-cols-max grid-flow-col gap-2 overflow-x-auto p-1 scroll-p-1 [&>button]:scroll-m-1"
                 >
-                  {ACCENTS.map((color) => {
+                  {(spheres ? SPHERES_ACCENTS : ACCENTS).map((color) => {
                     const colorLabel =
-                      color === "bee"
-                        ? "Honey"
-                        : `${color.charAt(0).toUpperCase()}${color.slice(1)}`;
+                      color === "spheres-ink"
+                        ? "Spheres Ink"
+                        : color === "bee"
+                          ? "Honey"
+                          : `${color.charAt(0).toUpperCase()}${color.slice(1)}`;
                     return (
                       <IconButton
                         key={color}
@@ -248,18 +257,18 @@ export function AppearanceSettings({
             )}
           />
           <PreferenceRow
-            title="Vibe level"
+            title={contrastLabel}
             trailing={
               <Select
                 variant="compact"
-                label="Vibe level"
+                label={contrastLabel}
                 value={contrast}
                 groups={[
                   {
-                    label: "Vibe level",
+                    label: contrastLabel,
                     options: [
-                      { value: "low", label: "Chillin’" },
-                      { value: "high", label: "Buzzin’" },
+                      { value: "low", label: spheres ? "Soft" : "Chillin’" },
+                      { value: "high", label: spheres ? "Bold" : "Buzzin’" },
                     ],
                   },
                 ]}
@@ -568,11 +577,11 @@ export function AppearanceSettings({
         )}
         {active && contrastError && (
           <ToastNotice
-            title="Vibe level wasn’t saved"
+            title={`${contrastLabel} wasn’t saved`}
             description={contrastError}
           >
             <Button size="sm" onClick={() => appearance.setContrast(contrast)}>
-              Retry saving vibe level
+              Retry saving {contrastLabel.toLowerCase()}
             </Button>
           </ToastNotice>
         )}

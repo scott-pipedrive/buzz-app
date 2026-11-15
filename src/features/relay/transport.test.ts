@@ -4,6 +4,7 @@ import {
   connectSignedTransport,
   acceptPublish,
   acceptReadStatePublish,
+  mediaUrl,
 } from "./transport";
 import {
   ReadStateTimestampRejected,
@@ -13,6 +14,22 @@ import { PublishRejected } from "./outbox";
 import { hostSigner, keypair, signed } from "./testing";
 const key = keypair();
 afterEach(() => vi.unstubAllGlobals());
+it("signs old Spheres attachments for the active canonical relay", () => {
+  vi.stubEnv("VITE_BUZZ_PACKAGED_COMMUNITY", "https://hellospheres.com");
+  try {
+    const path = `/media/${"a".repeat(64)}.png`;
+    const saved = `https://buzz.askbellboy.com${path}`;
+    const sign = vi.fn((url: string) => url);
+    expect(mediaUrl(saved, sign, "https://hellospheres.com")).toBe(
+      `https://hellospheres.com${path}`,
+    );
+    expect(sign).toHaveBeenCalledOnce();
+    expect(mediaUrl(saved, sign, "https://other.example")).toBe(saved);
+    expect(sign).toHaveBeenCalledOnce();
+  } finally {
+    vi.unstubAllEnvs();
+  }
+});
 it.each([
   {
     status: 503,

@@ -1,4 +1,5 @@
 // biome-ignore-all lint/a11y/noNoninteractiveTabindex: The history region must support keyboard scrolling.
+import { appName } from "../../shared/app-name";
 import { AgentConnectionSetup } from "../agents/AgentConnectionSetup";
 import { TypingIndicator, useLiveConversationAgents } from "./TypingIndicator";
 import { ActivityGroupPreview } from "./ActivityGroupPreview";
@@ -1913,7 +1914,7 @@ function Timeline({
         {window.historyLimited ? (
           <span>History window limit reached</span>
         ) : window.hasMore && queries.channels.cachedOnly ? (
-          <span>You can load older messages once Buzz reconnects.</span>
+          <span>{`You can load older messages once ${appName()} reconnects.`}</span>
         ) : window.hasMore && (historyControl === "button" || window.error) ? (
           <Button
             type="button"

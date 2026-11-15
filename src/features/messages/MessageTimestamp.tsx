@@ -20,11 +20,15 @@ export function DayDivider({ createdAt }: { createdAt: number }) {
     .join("-");
   return (
     <div className={styles.day}>
-      <span className={styles.dayLabel}>
+      <span className={styles.dayLabel} data-message-day-label="">
         {/* Decorative calendar artwork; the adjacent label owns the date.
             The numeral is HTML, not SVG <text>: Linux WebKit's SVG text cost
             doubled every thread-pane interaction in browser journeys. */}
-        <span className={styles.dayCalendar} aria-hidden="true">
+        <span
+          className={styles.dayCalendar}
+          data-message-day-calendar=""
+          aria-hidden="true"
+        >
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <rect x="0.5" y="0.5" width="23" height="23" rx="5.5" fill="#fff" />
             <path

@@ -6,7 +6,10 @@ import { Avatar } from "../../shared/design-system/ui/Avatar";
 import { agentAvatars } from "./avatar-packs";
 import { AgentAvatarArtworkProvider } from "./AgentAvatarArtworkProvider";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  document.documentElement.removeAttribute("data-spheres");
+});
 
 it("uses bundled static portraits for recognized pack URLs across avatar sizes", () => {
   const pack = agentAvatars[0];
@@ -55,4 +58,27 @@ it("preserves ordinary image loading and fallback for unrecognized portraits", (
   fireEvent.error(image);
   expect(avatar).toHaveTextContent("P");
   expect(avatar.querySelector("img")).toBeNull();
+});
+
+it("shows Spheres artwork for saved stock portraits alongside custom pictures", () => {
+  document.documentElement.setAttribute("data-spheres", "");
+  const stock = agentAvatars[0];
+  if (!stock) throw new Error("Missing stock avatar fixture");
+  const custom = "https://example.test/person.png";
+  const view = render(
+    <AgentAvatarArtworkProvider>
+      <Avatar src={stock.url} alt="Stock portrait" fallback="Agent" />
+      <Avatar src={custom} alt="Custom portrait" fallback="Agent" />
+    </AgentAvatarArtworkProvider>,
+  );
+  const stockImage = view
+    .getByRole("img", { name: "Stock portrait" })
+    .querySelector("img");
+  const customImage = view
+    .getByRole("img", { name: "Custom portrait" })
+    .querySelector("img");
+  expect(stockImage?.getAttribute("src")).toMatch(
+    /^\/spheres\/avatars\/v1\/[a-z-]+\.png$/,
+  );
+  expect(customImage).toHaveAttribute("src", custom);
 });

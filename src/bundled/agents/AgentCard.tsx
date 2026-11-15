@@ -1,7 +1,7 @@
 // An agent as a card: its portrait large, its name, and one line about it.
 // Pack avatars play their animation; any other picture shows still.
 import type { ComponentProps, ReactNode } from "react";
-import { agentAvatars } from "../../features/agents/avatar-packs";
+import { findPackAvatar } from "../../features/agents/avatar-packs";
 import { StarFilledIcon } from "../../shared/design-system/icons";
 import { SurfaceButton } from "../../shared/design-system/ui/SurfaceButton";
 import { useAvatarPreview } from "../../features/profiles/use-avatar-preview";
@@ -14,7 +14,7 @@ type Portrayed = Readonly<{ name: string; picture?: string | undefined }>;
 
 /** Static artwork shares the portrait's pack lookup and protected media path. */
 export function useAgentPortraitSource(agent: Portrayed, community?: string) {
-  const pack = agentAvatars.find((avatar) => avatar.url === agent.picture);
+  const pack = findPackAvatar(agent.picture);
   const src = useAvatarPreview(
     pack ? "" : (agent.picture ?? ""),
     community,
@@ -53,7 +53,7 @@ export function AgentCardBackdrop({
   agent: Portrayed;
   community?: string | undefined;
 }) {
-  const pack = agentAvatars.find((avatar) => avatar.url === agent.picture);
+  const pack = findPackAvatar(agent.picture);
   const src = useAvatarPreview(
     pack ? "" : (agent.picture ?? ""),
     community,
@@ -95,7 +95,11 @@ export function AgentCard({
   menu?: ReactNode;
 }) {
   return (
-    <div {...props} className={`${styles.card} ${styles.agentCard}`}>
+    <div
+      {...props}
+      className={`${styles.card} ${styles.agentCard}`}
+      data-agent-card=""
+    >
       <AgentCardBackdrop agent={agent} community={community} />
       {isBestie && (
         <span
@@ -158,13 +162,17 @@ export function AgentCard({
         </span>
       )}
       {menu && <div className={styles.menu}>{menu}</div>}
-      <span className={styles.portrait} aria-hidden="true">
+      <span
+        className={styles.portrait}
+        data-agent-card-portrait=""
+        aria-hidden="true"
+      >
         <AgentPortrait agent={agent} community={community} />
       </span>
       <span className={styles.identity}>
         <span className={`${styles.name} text-label`}>{agent.name}</span>
         {detail && (
-          <span className={styles.detail}>
+          <span className={styles.detail} data-agent-card-detail="">
             {icon}
             <span className={styles.detailText}>{detail}</span>
           </span>

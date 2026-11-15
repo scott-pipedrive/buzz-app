@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { appName } from "../../shared/app-name";
 import fragment from "./wordmark.frag?raw";
 import styles from "./IdentitySetup.module.css";
 
@@ -156,7 +157,7 @@ export function OnboardingWordmark() {
       className={styles.logoLayers}
       data-animated={animated}
       role="img"
-      aria-label="Buzz"
+      aria-label={appName()}
     >
       <img src="/buzz-wordmark.png" alt="" width="777" height="326" />
       <canvas

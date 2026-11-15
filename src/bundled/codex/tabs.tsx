@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import type { AgentExecutionBinding } from "../../features/agents/execution";
 import type { AgentKey } from "../../features/agents/membership";
 import activityStyles from "../../features/agents/ActivityLayout.module.css";
@@ -414,9 +415,7 @@ function CodexSignIn({
           </div>
           {step === "install" && (
             <p className="m-0 text-body-sm text-subtle">
-              Downloads Buzz's own copy of Codex (about 130 MB) and keeps it on
-              the latest release. Your own installation of Codex will be
-              unaffected, and uses the same sign-in and settings.
+              {`Downloads ${appName()}'s own copy of Codex (about 130 MB) and keeps it on the latest release. Your own installation of Codex will be unaffected, and uses the same sign-in and settings.`}
             </p>
           )}
           {output && (
@@ -871,9 +870,7 @@ export function createTabs(
           ) : null}
           {action?.step === "install" && !installing.running && (
             <p className="m-0 text-body-sm text-subtle">
-              Downloads Buzz's own copy of Codex (about 130 MB) and keeps it on
-              the latest release. Your own installation of Codex will be
-              unaffected, and uses the same sign-in and settings.
+              {`Downloads ${appName()}'s own copy of Codex (about 130 MB) and keeps it on the latest release. Your own installation of Codex will be unaffected, and uses the same sign-in and settings.`}
             </p>
           )}
           {installing.output && (
@@ -1327,7 +1324,7 @@ export function createTabs(
               description={
                 bound
                   ? "The adapter selects a workspace for each conversation session."
-                  : "Codex starts here with full access to your files and network. Buzz tools run inside the app. Inherited MCP/Apps/plugin tools are disabled."
+                  : `Codex starts here with full access to your files and network. ${appName()} tools run inside the app. Inherited MCP/Apps/plugin tools are disabled.`
               }
             >
               <Input

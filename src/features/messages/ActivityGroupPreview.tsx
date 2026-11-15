@@ -140,6 +140,10 @@ export function ActivityGroupPreview({
         id,
         name: named(id),
         picture: avatarMedia(profiles.get(id)?.picture, media),
+        expression: group.liveParticipants.includes(id)
+          ? (group.expressions.get(id) ??
+            (live && id === row.authorId ? "working" : undefined))
+          : undefined,
       }))}
       stackPrevious={!group.standalone}
       picture={avatarMedia(profile?.picture, media)}

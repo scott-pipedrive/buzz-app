@@ -1,3 +1,4 @@
+import { appName } from "../shared/app-name";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Header, InlineHeader } from "../shared/design-system/ui/Header";
 import { SettingsGroup } from "../shared/design-system/ui/SettingsGroup";
@@ -114,7 +115,7 @@ export function SecuritySettings({
         <EmptyState
           icon={<LockIcon />}
           title="No paired tools"
-          description="Run buzz auth desktop pair in a terminal to let a command-line tool use Buzz as you."
+          description={`Run buzz auth desktop pair in a terminal to let a command-line tool use ${appName()} as you.`}
         />
       ) : (
         tools && (

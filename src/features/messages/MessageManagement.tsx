@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import {
   BellIcon,
   BellSlashIcon,
@@ -810,10 +811,10 @@ function DeleteMessageDialog({
       initialFocus={cancelAction}
       description={
         unconfirmed
-          ? "Buzz couldn’t confirm whether this message was delivered. Removing it stops this device from sending it. If it was delivered, it stays in the conversation. This cannot be undone."
+          ? `${appName()} couldn’t confirm whether this message was delivered. Removing it stops this device from sending it. If it was delivered, it stays in the conversation. This cannot be undone.`
           : local
             ? "This message wasn’t sent. Deleting it removes it from this device. This cannot be undone."
-            : "This requests removal of this message from Buzz’s relay. People may still have copies. This cannot be undone."
+            : `This requests removal of this message from ${appName()}’s relay. People may still have copies. This cannot be undone.`
       }
       pending={pending}
       finalFocus={() =>

@@ -1,3 +1,4 @@
+import { appName, previousAppName } from "../../shared/app-name";
 import { OnboardingBack } from "./OnboardingBack";
 import {
   useEffect,
@@ -18,7 +19,7 @@ import { Input } from "../../shared/design-system/ui/Input";
 import type { Identity } from "./service";
 import { RestoreIdentity } from "./RestoreIdentity";
 import styles from "./IdentitySetup.module.css";
-import { OnboardingWordmark } from "./OnboardingWordmark";
+import { SpheresWordmark } from "./SpheresArtwork";
 import { OnboardingScreen } from "./OnboardingScreen";
 
 /** Key import/create gate; the app's first launch now uses Welcome instead. */
@@ -68,14 +69,9 @@ export function IdentitySetup({
         welcome
         labelledBy="identity-landing-title"
         intro={
-          <>
-            <h1 id="identity-landing-title" className={styles.wordmark}>
-              <OnboardingWordmark />
-            </h1>
-            <p className={styles.tagline}>
-              Your people, your agents, one place.
-            </p>
-          </>
+          <h1 id="identity-landing-title" className={styles.wordmark}>
+            <SpheresWordmark />
+          </h1>
         }
       >
         {state.error && <p role="alert">{state.error}</p>}
@@ -88,7 +84,7 @@ export function IdentitySetup({
                 disabled={state.busy}
                 onClick={() => void identity.importLegacy()}
               >
-                Continue with your Buzz identity
+                {`Continue with your ${appName()} identity`}
               </Button>
             )}
             <Button
@@ -146,7 +142,9 @@ export function IdentitySetup({
       >
         <div className={importing ? styles.importContent : styles.setupContent}>
           <h1 id="identity-setup-title" className="text-heading">
-            {importing ? "Use your existing identity" : "Your Buzz identity"}
+            {importing
+              ? "Use your existing identity"
+              : `Your ${appName()} identity`}
           </h1>
           {state.status === "loading" ? (
             <p role="status">Opening your saved identity…</p>
@@ -185,7 +183,7 @@ export function IdentitySetup({
                   <Field
                     label="Private key (nsec)"
                     controlId="import-nsec"
-                    description="Copy this from Identity details in your old Buzz app. Never share it with anyone."
+                    description={`Copy this from Identity details in ${previousAppName()}. Never share it with anyone.`}
                   >
                     <Input
                       autoFocus

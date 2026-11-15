@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import { useConversationPresentation } from "./ConversationPresentation";
 import {
@@ -526,7 +527,7 @@ export function MessageLink({
         />
       )}
       {unavailable && (
-        <span role="status"> This Buzz link couldn’t be opened here.</span>
+        <span role="status">{` This ${appName()} link couldn’t be opened here.`}</span>
       )}
     </>
   );

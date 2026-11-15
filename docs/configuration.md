@@ -83,6 +83,12 @@ choice. Selection starts the normal authenticated relay session; it grants no
 membership or admission bypass. If the relay refuses admission or is offline,
 the normal connection error/retry flow applies. No legacy preferences are copied.
 
+Self-hosted builds with both sign-in inputs empty can set
+`BUZZ_BUILD_JOIN_ONBOARDING=1` to require an explicit join for fresh profiles.
+This uses the packaged origin on the welcome screen and saves it after the relay
+admits the profile. Opened invite links supply their own destination and follow
+the relay’s admission policy. Previously saved workspaces still open on launch.
+
 ## Databricks host
 
 Internal packagers can point the bundled goose's Databricks provider at a

@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { invoke } from "@tauri-apps/api/core";
 import { OnboardingBack } from "./OnboardingBack";
 import {
@@ -22,7 +23,12 @@ import { communityDestination } from "../communities/destination";
 import { accountConsents } from "../communities/account-consent";
 import { FindCommunity, type JoinConsent } from "../communities/FindCommunity";
 import type { FoundCommunity } from "../communities/find-community";
-import type { createInviteIntent } from "../communities/invite-intent";
+import { communityName } from "../communities/community-name";
+import {
+  firstRunInvite,
+  type createInviteIntent,
+} from "../communities/invite-intent";
+import type { InviteLink } from "../communities/invite-link";
 import {
   type Admission,
   admitCommunity,
@@ -68,7 +74,7 @@ import { KeyRestore } from "./KeyRestore";
 import { LinkedKeyCheck, useSession } from "./LinkedKeyCheck";
 import { useLegacyIdentityOffer } from "./LegacyIdentityOffer";
 import { OnboardingScreen } from "./OnboardingScreen";
-import { OnboardingWordmark } from "./OnboardingWordmark";
+import { SpheresWordmark } from "./SpheresArtwork";
 import { ProfileStep } from "./ProfileStep";
 import { PublicKeyPanel } from "./PublicKeyPanel";
 import type { Restored } from "./restore-communities";
@@ -113,7 +119,7 @@ import { WireframeScreen } from "./Wireframe";
 const RESTART_WAIT_MS = 30_000;
 /** The sign-in after Replace's restart reached an account other than the one it replaced the key for. */
 const WRONG_ACCOUNT =
-  "You signed in to a different Builderlab account than the one whose key Buzz restarted to restore. Use a different account to sign in to that one.";
+  `You signed in to a different Builderlab account than the one whose key ${appName()} restarted to restore. Use a different account to sign in to that one.`;
 
 /**
  * The signed-in account: the development seed when a dev server set one
@@ -141,6 +147,7 @@ export function Welcome({
   identity,
   communities,
   invites,
+  pendingInvite,
   children,
   federatedIdentity,
   connect = federatedIdentity &&
@@ -171,6 +178,7 @@ export function Welcome({
    * handed to the rail's Add-a-community dialog as the gate lifts.
    */
   invites: Pick<ReturnType<typeof createInviteIntent>, "open">;
+  pendingInvite?: ReturnType<ReturnType<typeof createInviteIntent>["snapshot"]>;
   children: ReactNode;
   /**
    * The NIP-FI session as the bundled Builderlab plugin calls it
@@ -207,7 +215,7 @@ export function Welcome({
         return connect
           ? connect(signal, { signup: create, forceLogin: switching.current })
           : Promise.reject(
-              new Error("This Buzz build has no Builderlab sign-in."),
+              new Error(`This ${appName()} build has no Builderlab sign-in.`),
             );
       },
       federatedIdentity &&
@@ -260,9 +268,26 @@ export function Welcome({
   const [creating, setCreating] = useState(false);
 
   // The typed address survives a round trip to the find page and back.
-  const defaultCommunity = import.meta.env.VITE_BUZZ_DEFAULT_COMMUNITY ?? "";
-  const [entered, setEntered] = useState(defaultCommunity);
+  const defaultCommunity =
+    import.meta.env.VITE_BUZZ_PACKAGED_COMMUNITY ||
+    import.meta.env.VITE_BUZZ_DEFAULT_COMMUNITY ||
+    "";
+  const directJoin =
+    !connect &&
+    import.meta.env.VITE_BUZZ_JOIN_ONBOARDING === "1" &&
+    Boolean(defaultCommunity);
+  const coldInvite = useSyncExternalStore(
+    firstRunInvite.subscribe,
+    firstRunInvite.snapshot,
+  );
+  const [joinDestination, setJoinDestination] = useState<InviteLink>();
   const [otherOptions, setOtherOptions] = useState(false);
+  const firstJoin =
+    directJoin && progress.status === "idle" && !otherOptions
+      ? (joinDestination ??
+        (state.status === "missing" ? coldInvite?.invite : undefined))
+      : undefined;
+  const [entered, setEntered] = useState(defaultCommunity);
   const returningFromOptions = useRef(false);
   // The canonical origin the user asked to join: before sign-in it drives the
   // discovery lookup; after setup, the Join Community page. Cleared on every
@@ -301,10 +326,39 @@ export function Welcome({
   // gate lifts when it exits.
   const [profileStep, setProfileStep] = useState<ProfileStepState>();
   const viewer = state.status === "ready" ? state.viewer : undefined;
+  useEffect(() => {
+    if (
+      !directJoin &&
+      !connect &&
+      defaultCommunity &&
+      progress.status === "done" &&
+      !finding &&
+      !creating &&
+      !profileStep &&
+      !joinError &&
+      pendingInvite?.code &&
+      pendingInvite.viewer === viewer
+    )
+      setup.reset();
+  }, [
+    directJoin,
+    connect,
+    progress.status,
+    finding,
+    creating,
+    profileStep,
+    joinError,
+    pendingInvite,
+    viewer,
+    setup,
+  ]);
   // A key on this device on the landing a failed setup left to.
   const keyLanding = !!viewer && leftSetup;
   const inApp =
-    state.status === "ready" && progress.status === "idle" && !keyLanding;
+    state.status === "ready" &&
+    progress.status === "idle" &&
+    !keyLanding &&
+    !firstJoin;
   // The launch mark covers the window until something is ready to show. The
   // app clears it once it loads; a page here has to clear it itself.
   useEffect(() => {
@@ -371,15 +425,17 @@ export function Welcome({
       : state.status === "error"
         ? "error"
         : progress.status === "idle"
-          ? state.status === "ready" && !keyLanding
-            ? undefined
-            : auth.error === SIGN_IN_TIMED_OUT
-              ? "auth-timeout"
-              : auth.error
-                ? "auth-error"
-                : discovering
-                  ? "discover"
-                  : "landing"
+          ? firstJoin
+            ? "local-join"
+            : inApp
+              ? undefined
+              : auth.error === SIGN_IN_TIMED_OUT
+                ? "auth-timeout"
+                : auth.error
+                  ? "auth-error"
+                  : discovering
+                    ? "discover"
+                    : "landing"
           : progress.status === "done"
             ? profileStep
               ? "done:profile"
@@ -453,7 +509,9 @@ export function Welcome({
         throw new Error(signOutFailure(reason));
       }
       await new Promise((settle) => setTimeout(settle, RESTART_WAIT_MS));
-      throw new Error("Buzz didn’t restart. Quit and reopen Buzz to finish.");
+      throw new Error(
+        `${appName()} didn’t restart. Quit and reopen it to finish.`,
+      );
     },
   });
   if (inApp && viewer) {
@@ -556,7 +614,7 @@ export function Welcome({
             communities.snapshot().memberships.length > 0
               ? [
                   {
-                    label: "Opening Buzz…",
+                    label: `Opening ${appName()}…`,
                     run: async () => {
                       enterApp();
                       return { status: "idle" };
@@ -674,6 +732,7 @@ export function Welcome({
       );
     handoff.current = undefined;
     setFinding(undefined);
+    setJoinDestination(undefined);
     setInviteCode("");
     setEntered(defaultCommunity);
     setCreatable(undefined);
@@ -844,6 +903,71 @@ export function Welcome({
       communities,
       current,
     });
+  const joinWithName = async (
+    destination: InviteLink,
+    found: FoundCommunity,
+    consent: JoinConsent,
+    name: string,
+  ) => {
+    const preview = firstRunInvite.snapshot();
+    // A newer invite may have arrived since this form rendered.
+    if (!joinDestination && preview?.invite !== destination) return;
+    setJoinDestination(destination);
+    if (preview?.invite === destination) preview.take();
+    if (identity.snapshot().status === "missing")
+      await createKey(identity).run();
+    const here = identity.snapshot();
+    if (here.status !== "ready")
+      throw new Error("Your profile could not be saved on this device.");
+    // The identity's ready promise also starts restoring the local community store.
+    await identity.ready;
+    const client = communities.snapshot();
+    if (client.status !== "ready" || client.viewer !== here.viewer)
+      throw new Error(
+        client.error ?? "Your saved communities aren’t ready yet. Try again.",
+      );
+    const journal = createJoinJournal(here.viewer);
+    const current: Current = (entry) =>
+      mounted.current &&
+      identity.snapshot() === here &&
+      (!entry || journal.current(entry));
+    const profile: PersonalProfile = { name, picture: "", about: "" };
+    const discoveredName = communityName(found.name, found.host);
+    const admission = await admitCommunity({
+      community: found.url,
+      journal,
+      code: destination.code,
+      policy: found.policy,
+      consent,
+      current,
+      profile,
+    }).catch((error: unknown) => {
+      if (readErrorKind(error) === "denied")
+        throw new Error(
+          "You need an invite to join. Open an invite link and try again.",
+        );
+      throw error;
+    });
+    if (!admission) return;
+    const joined = await completeJoin({
+      community: found.url,
+      membership: {
+        id: found.url,
+        name:
+          discoveredName === found.host && found.url === defaultCommunity
+            ? appName()
+            : discoveredName,
+        ...(found.icon ? { icon: found.icon } : {}),
+      },
+      found: admission.found,
+      journal,
+      entry: admission.entry,
+      communities,
+      current,
+      publish: admission.found.exists ? undefined : profile,
+    });
+    if (joined) enterApp();
+  };
   const leave = () => {
     setProfileStep(undefined);
     enterApp();
@@ -1011,7 +1135,8 @@ export function Welcome({
             onImport={async (nsec) => {
               await importKey(identity, nsec);
               // A key brought without an account is the self-hosted route.
-              if (!current) void setup.start([]);
+              if (!current && directJoin) enterApp();
+              else if (!current) void setup.start([]);
               else
                 void setup.start([
                   ...(!linked ? [linkKey(identity, current)] : []),
@@ -1181,7 +1306,7 @@ export function Welcome({
               tabIndex={-1}
               className="text-heading text-standard"
             >
-              Your Buzz identity
+              Your {appName()} identity
             </h1>
             {state.status === "loading" ? (
               <p role="status">Opening your saved identity…</p>
@@ -1190,8 +1315,8 @@ export function Welcome({
               // restarts into first run's restore or import, gets past it.
               <>
                 <p role="alert">
-                  Buzz can’t read the key saved on this computer, so it can’t
-                  open with it or copy it. Trying again won’t change that.
+                  {appName()} can’t read the key saved on this computer, so it
+                  can’t open with it or copy it. Trying again won’t change that.
                 </p>
                 <Button onClick={() => setRemovingKey({ pending: false })}>
                   Remove from device
@@ -1199,7 +1324,7 @@ export function Welcome({
                 {removingKey && (
                   <AlertDialog
                     title="Remove the unreadable key?"
-                    description="This deletes it from this computer’s secure storage, signs you out of your organizations and restarts Buzz. Then sign in to restore your account’s key from its backup, or enter your private key. Without a backup or a copy, that identity can’t be recovered."
+                    description={`This deletes it from this computer’s secure storage, signs you out of your organizations and restarts ${appName()}. Then sign in to restore your account’s key from its backup, or enter your private key. Without a backup or a copy, that identity can’t be recovered.`}
                     pending={removingKey.pending}
                     onClose={() => setRemovingKey(undefined)}
                     actions={
@@ -1239,9 +1364,11 @@ export function Welcome({
             ) : (
               <>
                 <p role="alert">{state.error}</p>
-                <Button onClick={() => void identity.retry()}>
-                  Retry secure storage access
-                </Button>
+                {!state.waitingForStorage && (
+                  <Button onClick={() => void identity.retry()}>
+                    Retry secure storage access
+                  </Button>
+                )}
               </>
             )}
           </div>
@@ -1249,6 +1376,29 @@ export function Welcome({
       >
         {null}
       </OnboardingScreen>
+    );
+  if (firstJoin)
+    return (
+      <WireframeScreen>
+        <FindCommunity
+          key={`${firstJoin.community}:${firstJoin.code}`}
+          onboarding
+          askDisplayName
+          fallbackName={
+            firstJoin.community === defaultCommunity ? appName() : undefined
+          }
+          url={firstJoin.community}
+          onCancel={() => {
+            const preview = firstRunInvite.snapshot();
+            if (preview?.invite === firstJoin) preview.take();
+            setJoinDestination(undefined);
+          }}
+          onJoin={(found, consent, name) =>
+            joinWithName(firstJoin, found, consent, name)
+          }
+          titleId="welcome-title"
+        />
+      </WireframeScreen>
     );
   // Discovery: the same unauthenticated lookup Join Community runs after
   // setup, so a bad address fails here, before sign-in and before a key
@@ -1285,7 +1435,11 @@ export function Welcome({
         <CommunityUrlField
           url={entered}
           onUrlChange={setEntered}
-          onSubmit={find}
+          onSubmit={(community, code) => {
+            if (!directJoin) return find(community, code);
+            setJoinDestination({ community, code });
+            setOtherOptions(false);
+          }}
           onBack={() =>
             onboardingTransition(() => {
               returningFromOptions.current = true;
@@ -1311,14 +1465,9 @@ export function Welcome({
         welcome
         labelledBy="welcome-title"
         intro={
-          <>
-            <h1 id="welcome-title" tabIndex={-1} className={styles.wordmark}>
-              <OnboardingWordmark />
-            </h1>
-            <p className={styles.tagline}>
-              Your people, your agents, one place.
-            </p>
-          </>
+          <h1 id="welcome-title" tabIndex={-1} className={styles.wordmark}>
+            <SpheresWordmark />
+          </h1>
         }
       >
         {connect && (
@@ -1329,6 +1478,41 @@ export function Welcome({
             onClick={() => start(!returning)}
           >
             {returning ? "Sign in" : "Create account"}
+          </Button>
+        )}
+        {directJoin && state.status === "missing" && (
+          <Button
+            variant="prominent"
+            size="lg"
+            disabled={state.busy}
+            onClick={() =>
+              setJoinDestination({ community: defaultCommunity, code: "" })
+            }
+          >
+            Join Spheres
+          </Button>
+        )}
+        {!directJoin &&
+          !connect &&
+          defaultCommunity &&
+          state.status === "missing" && (
+            <Button
+              variant="prominent"
+              size="lg"
+              disabled={state.busy}
+              onClick={() => void setup.start([createKey(identity)])}
+            >
+              Create a Spheres identity
+            </Button>
+          )}
+        {directJoin && state.status === "missing" && (
+          <Button
+            size="lg"
+            variant="outline"
+            disabled={state.busy}
+            onClick={() => pause("key-import")}
+          >
+            Restore an existing profile
           </Button>
         )}
         {keyLanding ? (
@@ -1350,7 +1534,7 @@ export function Welcome({
             {connect && (
               <Button
                 size="lg"
-                variant="glass-clear"
+                variant="outline"
                 disabled={restoring}
                 onClick={() => start(returning)}
               >
@@ -1375,7 +1559,7 @@ export function Welcome({
                 })
               }
             >
-              Other options
+              {directJoin ? "Use an invite link" : "Other options"}
             </Button>
           </>
         )}

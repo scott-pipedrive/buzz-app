@@ -13,6 +13,7 @@ import {
 import { useState } from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { stubAvatarBrowserApis } from "../agents/avatar-testing";
+import { spheresAvatars } from "../agents/spheres-avatar-pack";
 import { createAgentActivity } from "../agents/activity";
 import { createLocalAgentActivity } from "../agents/local-activity";
 import { createRelaySession } from "../relay/session";
@@ -67,6 +68,68 @@ function fixture() {
     },
   };
 }
+it("changes a Spheres portrait with the linked request and preserves uploaded portraits", () => {
+  const f = fixture();
+  document.documentElement.dataset.spheres = "";
+  const stock = spheresAvatars[0];
+  if (!stock) throw new Error("Missing Spheres artwork");
+  const custom = "https://example.test/portrait.png";
+  const rows = [step, { ...step, id: "helper-step", authorId: "helper" }];
+  const profiles = new Map([
+    ["agent", { name: "Agent", picture: stock.url }],
+    ["helper", { name: "Helper", picture: custom }],
+  ]);
+  function Preview() {
+    const { groups } = useActivityPresentation(
+      rows,
+      f.activity,
+      undefined,
+      "request",
+    );
+    const group = groups[0];
+    if (!group) throw new Error("Missing group");
+    return (
+      <ActivityGroupPreview
+        group={group}
+        profiles={profiles}
+        media={(url) => url}
+        expanded={false}
+        onToggle={() => {}}
+      />
+    );
+  }
+  try {
+    const request = f.local.begin({
+      scope: "test",
+      agent: "agent",
+      channelId: "channel",
+      messageId: "request",
+      threadRootId: "request",
+    });
+    f.local
+      .begin({
+        scope: "test",
+        agent: "helper",
+        channelId: "channel",
+        messageId: "request",
+        threadRootId: "request",
+      })
+      .started();
+    render(<Preview />);
+    const picture = (name: string) =>
+      screen.getByTitle(name).querySelector("img");
+    expect(picture("Agent")?.getAttribute("src")).toMatch(/-listening\.webp$/);
+    act(() => request.started());
+    expect(picture("Agent")?.getAttribute("src")).toMatch(/-working\.webp$/);
+    act(() => request.finish({ ok: true }));
+    expect(picture("Agent")?.getAttribute("src")).toMatch(/-done\.webp$/);
+    expect(picture("Helper")).toHaveAttribute("src", custom);
+  } finally {
+    delete document.documentElement.dataset.spheres;
+    f.dispose();
+  }
+});
+
 it("keeps a signed failure and its history in one disclosure through completion and reload", () => {
   const f = fixture();
   const { audience: _audience, ...publicStep } = step;

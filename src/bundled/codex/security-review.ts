@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { resolveModel } from "./config";
 import { AppServer, listModels } from "./rpc";
 import type {
@@ -32,7 +33,7 @@ async function worker(spawn: ProtectedSpawn, homes: ReviewHomes) {
   const { home, state, workspace } = await homes();
   if (!workspace || !/^[\w-]+$/.test(workspace))
     throw new Error(
-      "Codex security reviews need a ChatGPT sign-in made in Buzz, which Settings → Agent setup → Harness defaults → Codex offers while Codex is signed out. API key and keyring sign-ins can't run reviews.",
+      `Codex security reviews need a ChatGPT sign-in made in ${appName()}, which Settings → Agent setup → Harness defaults → Codex offers while Codex is signed out. API key and keyring sign-ins can't run reviews.`,
     );
   const known = workers.get(spawn);
   if (known?.workspace === workspace) return known.ready;

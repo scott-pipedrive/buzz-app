@@ -16,22 +16,22 @@ use std::sync::Mutex;
 use std::time::{Duration, Instant};
 use tauri::Manager;
 
-const FAILED: &str = "Sign out of Buzz didn't finish. Open Buzz again to retry.";
-const BUSY: &str = "Another Buzz window using this sign-in is still open. Quit it, then open Buzz again to finish signing out.";
+const FAILED: &str = concat!("Sign out of ", env!("BUZZ_DISPLAY_NAME"), " didn't finish. Open ", env!("BUZZ_DISPLAY_NAME"), " again to retry.");
+const BUSY: &str = concat!("Another ", env!("BUZZ_DISPLAY_NAME"), " window using this sign-in is still open. Quit it, then open ", env!("BUZZ_DISPLAY_NAME"), " again to finish signing out.");
 const BUSY_ALL: &str =
-    "Another Buzz window is still open. Quit every Buzz window, then open Buzz again to finish erasing.";
+    concat!("Another ", env!("BUZZ_DISPLAY_NAME"), " window is still open. Quit every ", env!("BUZZ_DISPLAY_NAME"), " window, then open ", env!("BUZZ_DISPLAY_NAME"), " again to finish erasing.");
 const OTHERS: &str =
-    "Quit every other Buzz window using this sign-in, then sign out again. Nothing was removed.";
+    concat!("Quit every other ", env!("BUZZ_DISPLAY_NAME"), " window using this sign-in, then sign out again. Nothing was removed.");
 const OTHERS_ALL: &str =
-    "Quit every other Buzz window, then sign out and erase again. Nothing was removed.";
-const SIGNING_OUT: &str = "Buzz is signing out in another window. Open Buzz again in a moment.";
+    concat!("Quit every other ", env!("BUZZ_DISPLAY_NAME"), " window, then sign out and erase again. Nothing was removed.");
+const SIGNING_OUT: &str = concat!(env!("BUZZ_DISPLAY_NAME"), " is signing out in another window. Open ", env!("BUZZ_DISPLAY_NAME"), " again in a moment.");
 const NOT_PREPARED: &str = "Couldn't prepare sign out; nothing was removed. Try again.";
-const FENCED: &str = "Buzz had to quit to sign out safely. Open Buzz again to continue.";
+const FENCED: &str = concat!(env!("BUZZ_DISPLAY_NAME"), " had to quit to sign out safely. Open ", env!("BUZZ_DISPLAY_NAME"), " again to continue.");
 const AGENT_STOPPING: &str =
-    "Erasing didn't finish because an agent is still stopping; nothing was removed. Open Buzz again to retry.";
-const ALREADY: &str = "Buzz is already signing out.";
-const LINKED: &str = "Erasing is unavailable because a Buzz storage folder is a link or couldn't be checked; nothing was removed";
-const DEV_WIPE: &str = "Erasing is unavailable in development builds because they share agent keys with the installed Buzz";
+    concat!("Erasing didn't finish because an agent is still stopping; nothing was removed. Open ", env!("BUZZ_DISPLAY_NAME"), " again to retry.");
+const ALREADY: &str = concat!(env!("BUZZ_DISPLAY_NAME"), " is already signing out.");
+const LINKED: &str = concat!("Erasing is unavailable because a ", env!("BUZZ_DISPLAY_NAME"), " storage folder is a link or couldn't be checked; nothing was removed");
+const DEV_WIPE: &str = concat!("Erasing is unavailable in development builds because they share agent keys with the installed ", env!("BUZZ_DISPLAY_NAME"));
 pub(crate) mod legacy_identifier;
 // TEMPORARY agents rename: remove after 2026-10-18; see the migration module.
 pub(crate) mod migrate_agents;
@@ -532,7 +532,7 @@ pub(crate) fn exit_with(message: &str) -> ! {
     eprintln!("buzz: {message}");
     rfd::MessageDialog::new()
         .set_level(rfd::MessageLevel::Error)
-        .set_title("Buzz")
+        .set_title(crate::DISPLAY_NAME)
         .set_description(message)
         .show();
     std::process::exit(1)

@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { getVersion } from "@tauri-apps/api/app";
 import { isTauri } from "@tauri-apps/api/core";
@@ -52,7 +53,7 @@ export function UpdateSettings({
     available: "Preparing update…",
     downloading: "Downloading update…",
     installing: "Installing update…",
-    ready: "Ready to install. Buzz will restart.",
+    ready: `Ready to install. ${appName()} will restart.`,
     error: "",
   };
   const label =

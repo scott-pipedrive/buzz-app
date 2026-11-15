@@ -1,3 +1,4 @@
+import { previousAppName } from "../../shared/app-name";
 import { invoke } from "@tauri-apps/api/core";
 import { communityDestination, relayAddress } from "./destination";
 import { enqueue } from "./known-communities";
@@ -99,7 +100,7 @@ export function importLegacyCommunities(
           );
         known.saved = true;
       } catch (error) {
-        console.warn("Couldn't save old Buzz's import progress", error);
+        console.warn(`Couldn't save ${previousAppName()}'s import progress`, error);
       }
     }
     return known;
@@ -147,7 +148,7 @@ export function importLegacyCommunities(
       if (add.length) await communities.applySync(sync, add);
       localStorage.setItem(importedKey(viewer), imported);
     } catch (error) {
-      console.warn("Couldn't add old Buzz's communities", error);
+      console.warn(`Couldn't add ${previousAppName()}'s communities`, error);
     } finally {
       setImporting(-1);
     }

@@ -1,3 +1,4 @@
+import { appName } from "../shared/app-name";
 import { SettingsGroup } from "../shared/design-system/ui/SettingsGroup";
 import { Field } from "../shared/design-system/ui/Field";
 import { Input } from "../shared/design-system/ui/Input";
@@ -56,7 +57,7 @@ const gitReferenceDescription =
 const gitSizeRecoveryHints = new Map([
   [
     "Git output exceeds the import size limit",
-    "Try another branch or tag. If the same output limit persists, ask the publisher for a ref or repository that Buzz can read.",
+    `Try another branch or tag. If the same output limit persists, ask the publisher for a ref or repository that ${appName()} can read.`,
   ],
   [
     "Repository exceeds the 256 MiB import limit",
@@ -1181,7 +1182,7 @@ export function PluginImport({
                   : preview.candidates.length
                     ? "Select a plugin to review before installing."
                     : "Try another folder or repository."
-                : "Load built plugins containing manifest.json and plugin.js. Buzz doesn’t build source code or run install scripts."
+                : `Load built plugins containing manifest.json and plugin.js. ${appName()} doesn’t build source code or run install scripts.`
         }
         size={error || (reviewing && updating) ? "compact" : "wide"}
         headerGap={reviewing && updating ? "compact" : "default"}
@@ -1256,7 +1257,7 @@ export function PluginImport({
                     if (await close()) onOpenInstalled(id);
                   }}
                 >
-                  Open in Buzz
+                  {`Open in ${appName()}`}
                 </Button>
               )}
               {reviewing && (duplicate ? !onOpenInstalled : upToDate) && (
@@ -1459,10 +1460,7 @@ export function PluginImport({
                       </p>
                     )}
                     <p className="m-0 text-caption text-muted">
-                      HTTPS or SSH; GitHub owner/repository also works. SSH uses
-                      your agent and known hosts. Password prompts and
-                      credential helpers are not used. Buzz git repositories in
-                      this community sign in with your account.
+                      {`HTTPS or SSH; GitHub owner/repository also works. SSH uses your agent and known hosts. Password prompts and credential helpers are not used. ${appName()} git repositories in this community sign in with your account.`}
                     </p>
                     <div className="justify-self-start">
                       <Button
@@ -1633,8 +1631,7 @@ export function PluginImport({
                   )}
                 {reviewing && existing?.source === "bundled" && !loading && (
                   <p className="m-0 text-body-sm">
-                    This plugin is included with Buzz. Update Buzz to get its
-                    latest version.
+                    {`This plugin is included with ${appName()}. Update ${appName()} to get its latest version.`}
                   </p>
                 )}
                 {reviewing &&

@@ -5,6 +5,10 @@
   const show = () => {
     void native.invoke("plugin:window|show", { label: "main" }).catch(() => {});
   };
+  if (document.documentElement.dataset.spheres !== undefined) {
+    show();
+    return;
+  }
   try {
     if (
       !localStorage.getItem("buzz-mac-welcome-intro.v1") &&

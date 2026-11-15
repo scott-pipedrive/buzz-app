@@ -12,10 +12,11 @@ function bootstrap({
   reduced = false,
   storageFails = false,
   native = true,
+  spheres = false,
 } = {}) {
   const calls = [];
   const timers = [];
-  const dataset = {};
+  const dataset = spheres ? { spheres: "" } : {};
   runInNewContext(source, {
     window: {
       __TAURI_INTERNALS__: native
@@ -48,6 +49,12 @@ test("failed bootstrap exposes the normal launch surface", () => {
   state.timers[0]();
   assert.equal(state.dataset.welcomeIntro, undefined);
   assert.deepEqual(state.calls, ["plugin:window|show"]);
+});
+test("Spheres shows its loader without waiting for the fullscreen intro", () => {
+  const state = bootstrap({ spheres: true });
+  assert.deepEqual(state.calls, ["plugin:window|show"]);
+  assert.equal(state.dataset.welcomeIntro, undefined);
+  assert.deepEqual(state.timers, []);
 });
 for (const options of [
   { seen: true },

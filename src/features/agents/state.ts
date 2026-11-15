@@ -9,6 +9,7 @@
 // and is then saved, in order, to its key's file. Another program's later
 // writes reach this copy only when the app starts again. `read` reads saved
 // state without changing this copy.
+import { appName } from "../../shared/app-name";
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import { CONFIG_STORAGE_KEY } from "./agent-config";
 import { CATCH_UP_KEY, CATCH_UP_PREFIX } from "./catch-up";
@@ -76,12 +77,12 @@ export function executionStorage(fallback: AgentStore): AgentStore {
     ...fallback,
     read: async () => {
       throw new Error(
-        "Native agent storage is unavailable. Restart Buzz before running agents.",
+        `Native agent storage is unavailable. Restart ${appName()} before running agents.`,
       );
     },
     add: async () => {
       throw new Error(
-        "Native agent storage is unavailable. Restart Buzz before running agents.",
+        `Native agent storage is unavailable. Restart ${appName()} before running agents.`,
       );
     },
   });

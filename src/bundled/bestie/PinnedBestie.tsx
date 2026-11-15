@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { useEffect, useState } from "react";
 import { AgentPortrait } from "../agents/AgentCard";
 import type { ConversationExtensions } from "../../features/conversation/contracts";
@@ -134,7 +135,7 @@ export function PinnedBestie({
         <Notice
           title="Your agents are unavailable"
           description={
-            choices.error ?? "Buzz couldn’t finish reading your agents."
+            choices.error ?? `${appName()} couldn’t finish reading your agents.`
           }
           action={
             <Button
@@ -168,7 +169,7 @@ export function PinnedBestie({
           title="Your chats are unavailable"
           description={
             channels.error ??
-            "Buzz couldn’t read your chats, so this one can’t be opened."
+            `${appName()} couldn’t read your chats, so this one can’t be opened.`
           }
           action={
             <Button
@@ -264,7 +265,7 @@ function DirectMessage({
           setError(
             reason instanceof Error
               ? reason.message
-              : "Buzz couldn’t open this conversation.",
+              : `${appName()} couldn’t open this conversation.`,
           );
       }
     })();

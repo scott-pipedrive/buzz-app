@@ -52,6 +52,7 @@ export async function admitCommunity({
   policy,
   consent,
   current,
+  profile,
 }: {
   community: string;
   journal?: JoinJournal | undefined;
@@ -59,6 +60,7 @@ export async function admitCommunity({
   policy?: JoinPolicy | null | undefined;
   consent: JoinConsent;
   current: Current;
+  profile?: PersonalProfile;
 }): Promise<Admission | undefined> {
   const pending = journal?.get(community);
   if (pending) {
@@ -71,7 +73,7 @@ export async function admitCommunity({
     if (!current(pending)) return undefined;
     if (found) return { found, entry: pending };
   }
-  const transaction = journal?.begin(community);
+  const transaction = journal?.begin(community, profile);
   if (code.trim()) {
     const receipt = policy
       ? (

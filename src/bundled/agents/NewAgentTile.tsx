@@ -2,7 +2,11 @@ import type { ComponentProps, Ref } from "react";
 import { CaretDownIcon } from "../../shared/design-system/icons";
 import { SurfaceButton } from "../../shared/design-system/ui/SurfaceButton";
 import { Button } from "../../shared/design-system/ui/Button";
-import { agentAvatars } from "../../features/agents/avatar-packs";
+import {
+  agentAvatarChoices,
+  findPackAvatar,
+} from "../../features/agents/avatar-packs";
+import { appName } from "../../shared/app-name";
 import type { PortableAgent } from "../../features/agents/native";
 import { avatarPreview } from "../../features/profiles/avatar-upload";
 import { AvatarStack } from "../../shared/design-system/ui/AvatarStack";
@@ -60,6 +64,7 @@ export function NewAgentTile({
         />
       </Button>
     );
+  const choices = agentAvatarChoices();
   return (
     <SurfaceButton
       {...props}
@@ -78,8 +83,7 @@ export function NewAgentTile({
               id: agent.pubkey,
               name: agent.name,
               src:
-                agentAvatars.find((avatar) => avatar.url === agent.picture)
-                  ?.preview ??
+                findPackAvatar(agent.picture)?.preview ??
                 avatarPreview(
                   agent.picture ?? "",
                   agent.relay || undefined,
@@ -91,23 +95,23 @@ export function NewAgentTile({
         />
       ) : (
         <span aria-hidden="true" className={styles.newArtwork}>
-          {(fullWidth
-            ? agentAvatars
-                .filter(
-                  (_, index) =>
-                    index %
-                      Math.max(1, Math.floor(agentAvatars.length / 12)) ===
-                    0,
-                )
-                .slice(0, 12)
-                .map((avatar) => avatar.id)
-            : art
-          ).flatMap((id) => {
-            const avatar = agentAvatars.find((item) => item.id === id);
-            return avatar?.preview
-              ? [<img key={id} src={avatar.preview} alt="" />]
-              : [];
-          })}
+          {(appName() === "Spheres"
+            ? choices
+            : fullWidth
+              ? choices
+                  .filter(
+                    (_, index) =>
+                      index % Math.max(1, Math.floor(choices.length / 12)) ===
+                      0,
+                  )
+                  .slice(0, 12)
+              : art.map((id) => choices.find((item) => item.id === id))
+          ).map(
+            (avatar) =>
+              avatar?.preview && (
+                <img key={avatar.id} src={avatar.preview} alt="" />
+              ),
+          )}
         </span>
       )}
       {description && (

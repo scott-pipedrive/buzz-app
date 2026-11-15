@@ -1,3 +1,4 @@
+import { appName } from "../shared/app-name";
 import { gitScope } from "./git-scope";
 import { samePluginRelease } from "./same-release";
 import { managedBy } from "./managed";
@@ -45,7 +46,7 @@ export function updateFailure({
     /^https?:/i.test(source.repository) &&
     /could not read Username/i.test(error)
   )
-    return "Git needs a sign-in for this repository that Buzz couldn’t provide.";
+    return `Git needs a sign-in for this repository that ${appName()} couldn’t provide.`;
   if (error === MISMATCH || error === MISSING) return error;
 }
 

@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import type { JsonValue } from "../navigation/targets";
 import { relayPartition } from "../relay/partition";
 import type {
@@ -115,7 +116,7 @@ export function createArtifactStore(viewer: string, relay: string) {
         request.onblocked = () => {
           blocked = true;
           reject(
-            new Error("Close other Buzz windows to open artifact storage"),
+            new Error(`Close other ${appName()} windows to open artifact storage`),
           );
         };
         request.onsuccess = () => {

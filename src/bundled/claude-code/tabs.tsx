@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { ModelDiscoveryRecovery } from "../../features/agents/ModelDiscoveryRecovery";
 import activityStyles from "../../features/agents/ActivityLayout.module.css";
 import { formatItemTimestamp } from "../../shared/datetime";
@@ -250,7 +251,7 @@ function ClaudeSetupPanel({
       : status.state === "missing"
         ? "The Claude integration isn't installed yet."
         : status.state === "outdated"
-          ? `Claude ${status.version} is older than Buzz needs.`
+          ? `Claude ${status.version} is older than ${appName()} needs.`
           : status.state === "signed-out"
             ? `Claude ${status.version} ${setup.auth.needs}.`
             : status.state === "ready"
@@ -311,9 +312,7 @@ function ClaudeSetupPanel({
       </div>
       {status?.state === "missing" && (
         <p className="m-0 text-body-sm text-subtle">
-          Downloads Buzz's own copy of Claude (about 250 MB) and keeps it on the
-          latest release. Your own installation of Claude will be unaffected,
-          and uses the same settings.
+          {`Downloads ${appName()}'s own copy of Claude (about 250 MB) and keeps it on the latest release. Your own installation of Claude will be unaffected, and uses the same settings.`}
         </p>
       )}
       {state.output && (
@@ -795,7 +794,7 @@ export function createTabs({
         : status.state === "missing"
           ? "The Claude integration isn't installed yet."
           : status.state === "outdated"
-            ? `Claude ${status.version} is older than Buzz needs.`
+            ? `Claude ${status.version} is older than ${appName()} needs.`
             : status.state === "signed-out"
               ? `Claude ${status.version} ${setup.auth.needs}.`
               : status.state === "error"
@@ -849,9 +848,7 @@ export function createTabs({
           )}
           {status?.state === "missing" && !state.running && (
             <p className="m-0 text-body-sm text-subtle">
-              Downloads Buzz's own copy of Claude (about 250 MB) and keeps it on
-              the latest release. Your own installation of Claude will be
-              unaffected, and uses the same settings.
+              {`Downloads ${appName()}'s own copy of Claude (about 250 MB) and keeps it on the latest release. Your own installation of Claude will be unaffected, and uses the same settings.`}
             </p>
           )}
           {state.output && state.running !== "install" && (

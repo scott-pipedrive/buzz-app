@@ -14,9 +14,11 @@ import {
   swapAvatarArtwork,
 } from "./avatar-motion";
 import {
-  agentAvatars,
+  agentAvatarChoices,
+  findPackAvatar,
   randomAgentAvatar,
 } from "../../features/agents/avatar-packs";
+import { appName } from "../../shared/app-name";
 import { AvatarEmojiPicker } from "../../features/profiles/AvatarEditor";
 import {
   emojiAvatar,
@@ -122,16 +124,15 @@ export function AgentAvatarPicker({
   const [error, setError] = useState("");
   const input = useRef<HTMLInputElement>(null);
   const pending = useRef<AbortController | null>(null);
+  const spheres = appName() === "Spheres";
   const selected =
-    selection.kind === "gloopie"
-      ? agentAvatars.find((avatar) => avatar.url === picture)
-      : undefined;
+    selection.kind === "gloopie" ? findPackAvatar(picture) : undefined;
   const [lastAvatar, setLastAvatar] = useState(
     () => selected ?? randomAgentAvatar(),
   );
   const [slots, setSlots] = useState(() =>
-    agentAvatars
-      .filter((avatar) => avatar.url !== picture)
+    agentAvatarChoices()
+      .filter((avatar) => avatar.url !== selected?.url)
       .map((avatar) => ({ id: avatar.id, avatar })),
   );
   const center = useRef<HTMLDivElement>(null);
@@ -302,7 +303,7 @@ export function AgentAvatarPicker({
             items={[
               {
                 value: "gloopie",
-                label: "Gloopies",
+                label: spheres ? "Spheres" : "Gloopies",
                 disabled: locked,
                 icon: (
                   <Avatar
@@ -538,50 +539,57 @@ export function AgentAvatarPicker({
                 aria-label="Agent avatars"
                 disabled={locked}
               >
-                {slots.map(({ id, avatar }, index) => (
-                  <span key={id} className={styles.dockItem}>
-                    <SurfaceButton
-                      className={styles.avatarDockButton}
-                      onPointerDown={(event) => {
-                        if (event.pointerType === "mouse")
-                          event.preventDefault();
-                      }}
-                      aria-label={avatar.label}
-                      aria-pressed={picture === avatar.url}
-                      onClick={(event) => {
-                        swap.current?.();
-                        setAnimateBackdrop(
-                          event.detail > 0 && avatarMotionAllowed(),
-                        );
-                        if (
-                          selected?.preview &&
-                          avatar.preview &&
-                          center.current &&
-                          event.detail > 0 &&
-                          avatarMotionAllowed() &&
-                          typeof event.currentTarget.animate === "function"
-                        ) {
-                          swap.current = swapAvatarArtwork(
-                            event.currentTarget,
-                            center.current,
-                            selected.preview,
+                {slots
+                  .filter(({ avatar }) => avatar.url !== selected?.url)
+                  .map(({ id, avatar }) => (
+                    <span key={id} className={styles.dockItem}>
+                      <SurfaceButton
+                        className={styles.avatarDockButton}
+                        onPointerDown={(event) => {
+                          if (event.pointerType === "mouse")
+                            event.preventDefault();
+                        }}
+                        aria-label={avatar.label}
+                        aria-pressed={selected?.url === avatar.url}
+                        onClick={(event) => {
+                          swap.current?.();
+                          setAnimateBackdrop(
+                            event.detail > 0 && avatarMotionAllowed(),
                           );
-                        }
-                        setSlots((current) =>
-                          current.map((item, slot) =>
-                            slot === index
-                              ? { ...item, avatar: selected ?? lastAvatar }
-                              : item,
-                          ),
-                        );
-                        setLastAvatar(avatar);
-                        onChange({ kind: "gloopie", picture: avatar.url });
-                      }}
-                    >
-                      <img src={avatar.preview} alt="" loading="lazy" />
-                    </SurfaceButton>
-                  </span>
-                ))}
+                          if (
+                            selected?.preview &&
+                            avatar.preview &&
+                            center.current &&
+                            event.detail > 0 &&
+                            avatarMotionAllowed() &&
+                            typeof event.currentTarget.animate === "function"
+                          ) {
+                            swap.current = swapAvatarArtwork(
+                              event.currentTarget,
+                              center.current,
+                              selected.preview,
+                            );
+                          }
+                          setSlots((current) =>
+                            selected &&
+                            !current.some(
+                              (item) => item.avatar.url === selected.url,
+                            )
+                              ? current.map((item) =>
+                                  item.id === id
+                                    ? { ...item, avatar: selected }
+                                    : item,
+                                )
+                              : current,
+                          );
+                          setLastAvatar(avatar);
+                          onChange({ kind: "gloopie", picture: avatar.url });
+                        }}
+                      >
+                        <img src={avatar.preview} alt="" loading="lazy" />
+                      </SurfaceButton>
+                    </span>
+                  ))}
               </fieldset>
             )}
           </div>

@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { Button } from "../../shared/design-system/ui/Button";
 import { ToastNotice } from "../../shared/design-system/ui/Toast";
 import { useAgentsSnapshot } from "./react";
@@ -18,7 +19,7 @@ export function InterruptedNotice({ agents }: { agents: Agents }) {
           ? "Resume interrupted agent?"
           : "Resume interrupted agents?"
       }
-      description={`${names} ${interrupted.length === 1 ? "was" : "were"} working when Buzz closed or reloaded.`}
+      description={`${names} ${interrupted.length === 1 ? "was" : "were"} working when ${appName()} closed or reloaded.`}
       tone="info"
     >
       <Button

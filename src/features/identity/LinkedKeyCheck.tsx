@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import {
   type ReactNode,
   useEffect,
@@ -159,7 +160,7 @@ export function LinkedKeyCheck({
   const prompt = found.restorable ? (
     <AlertDialog
       title="Your account uses a different key"
-      description={`${account} is linked to a different key than the one on this computer, and Builderlab has a backup of it. Replacing removes this computer’s key and restarts Buzz to restore your account’s key. ${
+      description={`${account} is linked to a different key than the one on this computer, and Builderlab has a backup of it. Replacing removes this computer’s key and restarts ${appName()} to restore your account’s key. ${
         found.backedUp
           ? "This computer’s key was backed up in Builderlab: sign in to its account to restore it."
           : "This computer’s key may not be backed up: copy its private key from Settings → Identity first, or you could lose it."
@@ -177,7 +178,7 @@ export function LinkedKeyCheck({
   ) : (
     <AlertDialog
       title="Your account uses a different key"
-      description={`${account} is linked to a key that lives on another device, and Builderlab has no backup of it. Buzz keeps using this computer’s key. To use your account’s key here, turn on Identity sync in Settings → Identity on that device, or bring its private key here.`}
+      description={`${account} is linked to a key that lives on another device, and Builderlab has no backup of it. ${appName()} keeps using this computer’s key. To use your account’s key here, turn on Identity sync in Settings → Identity on that device, or bring its private key here.`}
       onClose={dismiss}
       actions={<Button onClick={dismiss}>OK</Button>}
     />

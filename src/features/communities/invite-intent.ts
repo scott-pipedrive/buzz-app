@@ -7,6 +7,31 @@ import type { InviteLink } from "./invite-link";
  */
 export type JoinRequest = InviteLink & { submitted?: boolean };
 
+/** A read-only preview of the router's held invite before a device has a key. */
+export const firstRunInvite = createFirstRunInvite();
+
+function createFirstRunInvite() {
+  let current: { invite: InviteLink; take(): void } | undefined;
+  const listeners = new Set<() => void>();
+  return {
+    snapshot: () => current,
+    subscribe(listener: () => void) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    show(invite: InviteLink, take: () => void) {
+      const preview = { invite, take };
+      current = preview;
+      for (const listener of listeners) listener();
+      return () => {
+        if (current !== preview) return;
+        current = undefined;
+        for (const listener of listeners) listener();
+      };
+    },
+  };
+}
+
 /** Opens the join dialog on a community address the person chose in the app;
  * false when the address is not a community origin or no identity is ready to
  * join with, so the caller can hand the address off another way. */

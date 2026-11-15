@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { Service, type Context } from "@deepseek-ai/cordis";
 import type { PluginManager } from "../../plugins/manager";
 
@@ -22,7 +23,7 @@ export class PluginDevelopmentService extends Service {
 
   plugins(): PluginManager {
     if (this.ctx.pluginOwner?.id !== PLUGIN_DEVELOPMENT)
-      throw new Error("Only Buzz's Plugin development plugin manages plugins.");
+      throw new Error(`Only ${appName()}'s Plugin development plugin manages plugins.`);
     return this.manager();
   }
 }

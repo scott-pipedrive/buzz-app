@@ -2,6 +2,7 @@
 // sign-in as `bl apps` calls it (block/builderlab-cli `src/bl/apps.rs`): the
 // transport sends the session as `Authorization: BBIdentity <session>`, and
 // the gateway exchanges it for the control plane's own token.
+import { appName } from "../../../shared/app-name";
 import type { FederatedIdentity } from "../../../features/federated-identity/service";
 import type { Host, HostResponse } from "../../../features/host/service";
 import type { BuilderlabSession } from "../session";
@@ -153,7 +154,7 @@ export function createAppsClient(
       .find((part) => part !== 0);
     if (difference !== undefined && difference < 0)
       throw new Error(
-        `Apps Platform requires client ${minimum}; update Buzz before creating or deploying apps`,
+        `Apps Platform requires client ${minimum}; update ${appName()} before creating or deploying apps`,
       );
     return result;
   };
@@ -235,7 +236,7 @@ export function createAppsClient(
     },
     /** Uploads `artifact` as the app's next version. */
     async deploy(id: string, artifact: string) {
-      if (!http.upload) throw new Error("Deploying needs the Buzz desktop app");
+      if (!http.upload) throw new Error(`Deploying needs the ${appName()} desktop app`);
       signedIn();
       const response = await http.upload({
         url: `${base}${app(id, "deploy")}`,

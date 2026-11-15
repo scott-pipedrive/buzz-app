@@ -1,3 +1,4 @@
+import { appName } from "../shared/app-name";
 import {
   type ReactNode,
   useCallback,
@@ -291,7 +292,7 @@ export function IdentitySettings({
               name={
                 profile && !profile.nameIsFallback
                   ? profile.name
-                  : "Your Buzz ID"
+                  : `Your ${appName()} ID`
               }
               picture={picture}
               photoContext={community ? communityName(community) : undefined}
@@ -313,7 +314,7 @@ export function IdentitySettings({
                             : "pending"
               }
               backupAccount={backupAccount}
-              onCopy={() => void copyIdentity(npub, "Buzz ID")}
+              onCopy={() => void copyIdentity(npub, `${appName()} ID`)}
             >
               {(active, badgeAction) => (
                 <>
@@ -354,8 +355,7 @@ export function IdentitySettings({
                       <div>
                         <p className="text-label-sm">On this device</p>
                         <p className="text-body-sm text-secondary">
-                          Your private key is kept in this device’s secure
-                          storage. It proves this Buzz ID is yours.
+                          {`Your private key is kept in this device’s secure storage. It proves this ${appName()} ID is yours.`}
                         </p>
                       </div>
                       <div>
@@ -419,7 +419,7 @@ export function IdentitySettings({
           </div>
           {copyStatus?.failed && (
             <p className="text-body-sm">
-              Full Buzz ID:{" "}
+              {`Full ${appName()} ID:`}{" "}
               <code className={`text-mono ${styles.identityValue}`}>
                 {npub}
               </code>
@@ -869,7 +869,7 @@ function OrganizationSignIn({
     (state.status === "unavailable" &&
     identity.recheck &&
     /^network-(unavailable|timeout)$/.test(problem)
-      ? "Buzz couldn’t check your saved sign-in. Check your connection, then choose Check again."
+      ? `${appName()} couldn’t check your saved sign-in. Check your connection, then choose Check again.`
       : recoveryMessage(problem));
   const recheck = state.status === "unavailable" && identity.recheck && (
     <Button
@@ -1045,7 +1045,7 @@ function OrganizationSignIn({
       {signedIn && confirmRevision === state.revision && (
         <AlertDialog
           title={`Sign out of ${organization}?`}
-          description={`Your Buzz identity stays on this device. You and your agents can’t reconnect to communities that require your ${organization} login until you sign back in.`}
+          description={`Your ${appName()} identity stays on this device. You and your agents can’t reconnect to communities that require your ${organization} login until you sign back in.`}
           finalFocus={trigger}
           onClose={() => setConfirmRevision(null)}
           actions={

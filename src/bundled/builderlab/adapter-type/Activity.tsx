@@ -1,5 +1,6 @@
 // The turns a remote agent published to its owner over the relay this session:
 // the conversation it was opened from, or all of them.
+import { appName } from "../../../shared/app-name";
 import {
   type ComponentType,
   type ReactNode,
@@ -82,7 +83,7 @@ export function ActivityPanel({
   /** Names the people whose messages prompted the turns. */
   names?: IdentityNameView | undefined;
 }) {
-  if (!activity) return <Note>Activity shows once Buzz is connected.</Note>;
+  if (!activity) return <Note>{`Activity shows once ${appName()} is connected.`}</Note>;
   return (
     <ActivityFeed
       agent={agent}
@@ -206,7 +207,7 @@ function ActivityFeed({
       before={
         <>
           <Note>
-            {`Turns from ${here ? "this conversation" : "all of this agent's conversations"}, captured while Buzz has been open. Earlier turns aren't shown.`}
+            {`Turns from ${here ? "this conversation" : "all of this agent's conversations"}, captured while ${appName()} has been open. Earlier turns aren't shown.`}
           </Note>
           {conversation && (
             // An inline link wraps in a narrow pane at large text sizes.

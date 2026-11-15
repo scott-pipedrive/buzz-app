@@ -14,7 +14,12 @@ import {
 import { LayoutGroup, motion, useReducedMotion } from "motion/react";
 import { useAvatarPreview } from "../../features/profiles/use-avatar-preview";
 import { AvatarEditor } from "../../features/profiles/AvatarEditor";
-import { agentAvatars, avatarPacks } from "../../features/agents/avatar-packs";
+import {
+  agentAvatarChoices,
+  agentAvatarCollections,
+  findPackAvatar,
+  type PackAvatar,
+} from "../../features/agents/avatar-packs";
 import { Button } from "../../shared/design-system/ui/Button";
 import { SurfaceButton } from "../../shared/design-system/ui/SurfaceButton";
 import { PlusIcon } from "../../shared/design-system/icons";
@@ -82,6 +87,8 @@ export function AgentCreateHeader({
   const root = useRef<HTMLFieldSetElement>(null);
   const previousView = useRef(view);
   const options = useRef<HTMLFieldSetElement>(null);
+  const avatarPacks = agentAvatarCollections();
+  const agentAvatars = agentAvatarChoices();
   const [representatives] = useState(() =>
     avatarPacks.map((pack) => {
       const members = agentAvatars.filter(
@@ -133,12 +140,12 @@ export function AgentCreateHeader({
       largestTile = size;
     }
   }
-  const selected = agentAvatars.find((avatar) => avatar.url === picture);
+  const selected = findPackAvatar(picture);
   const transition = {
     duration: reducedMotion || keyboard ? 0 : 0.3,
     ease: [0.22, 1, 0.36, 1] as const,
   };
-  const artwork = (avatar: (typeof agentAvatars)[number]) => (
+  const artwork = (avatar: PackAvatar) => (
     <motion.div
       layoutId={avatar.id}
       initial={false}
@@ -278,7 +285,7 @@ export function AgentCreateHeader({
                     key={avatar.id}
                     className={styles.option}
                     aria-label={avatar.label}
-                    aria-pressed={picture === avatar.url}
+                    aria-pressed={selected?.url === avatar.url}
                     onClick={() => {
                       setMovingAvatar(avatar.id);
                       onChange({ picture: avatar.url });

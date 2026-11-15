@@ -1,5 +1,6 @@
 /** Owner-only display projection of observer telemetry into turns and items.
  * Raw session retention is unchanged; this reads allowlisted ACP fields only. */
+import { appName } from "../../shared/app-name";
 import { isMessageTool } from "../../buzz-mcp/message-tools";
 import { readEventBody } from "../agent-harness/turn-records";
 import { terminalOutcome } from "./observer";
@@ -124,8 +125,8 @@ const TITLES = new Map(
     "recent-notes": "Recent notes",
     context: "Context",
     mention: "Mention",
-    "buzz-event": "Buzz event",
-    "buzz-events": "Buzz events",
+    "buzz-event": `${appName()} event`,
+    "buzz-events": `${appName()} events`,
     "thread-context": "Thread context",
     "conversation-context": "Conversation context",
     "turn-context": "Turn context",

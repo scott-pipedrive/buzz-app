@@ -33,7 +33,9 @@ export function CommunityLanding({
   onCreate(): void;
 }) {
   const [link, setLink] = useState(
-    import.meta.env.VITE_BUZZ_DEFAULT_COMMUNITY ?? "",
+    import.meta.env.VITE_BUZZ_PACKAGED_COMMUNITY ||
+      import.meta.env.VITE_BUZZ_DEFAULT_COMMUNITY ||
+      "",
   );
   const [error, setError] = useState("");
   const [joining, setJoining] = useState<InviteLink>();

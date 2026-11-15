@@ -58,6 +58,13 @@ mention anyone. Explicit agent watches on that room can still receive them.
 - Buzz uses a key-based identity. On first launch, the welcome screen offers
   **Create account** and **Sign in**, which open the Builderlab account page;
   when this computer already has a Builderlab sign-in saved, **Sign in** comes first.
+  In Spheres, **Join Spheres** opens the workspace details and display-name
+  field. **Open in Spheres** on an invite page opens this form for the invited
+  workspace. **Join** creates the device identity and checks access with the
+  workspace. **Restore an existing profile** imports a saved private key.
+  This build omits Builderlab sign-in, key backup, and the Builderlab plugin.
+  In this build, the app-wide Settings group and search are named **Spheres**
+  and **Search Spheres**.
   **Other options** reveals a **Community URL** field
   for an address or invite link; desktop does not offer QR scanning.
   With no communities yet, **Join** advances through full-page access and profile
@@ -68,8 +75,10 @@ mention anyone. Explicit agent watches on that room can still receive them.
   and the community is one it hosts, Buzz skips the age and terms boxes,
   because your account setup already covered them, and **Continue** joins
   straight away.
-  On Mac, the welcome entrance plays once per app storage profile; Reduce Motion
-  skips it, and pressing a key finishes it immediately.
+  The Spheres welcome screen shows three overlapping circles that drift into
+  the surrounding field. With Reduce Motion enabled, the circles stay still.
+  On Mac, **Window → Replay Welcome Animation** shows it in a separate window
+  while the workspace stays open.
   The key-import field masks your key. Use the eye inside the field to reveal
   or hide it.
   After Builderlab sign-in, an account with no linked key is set up
@@ -682,6 +691,11 @@ for 30 days expires.
   the same key as another shortcut, Settings → Shortcuts marks it "Also used
   by"; change one of them to choose which fires. In the Mac app, **Buzz →
   Settings…** in the menu bar also opens Settings.
+- In Spheres, **Settings → Appearance → Accent color** includes **Spheres
+  Ink**, the default for new installs. **Message color** offers a **Soft** tint
+  or a **Bold** fill for messages you send.
+- In Spheres conversations, built-in agent portraits change expression with
+  the activity shown in chat. Uploaded portraits retain their own artwork.
 - **Message width**: choose **Narrow** or **Wide** in **Settings → Appearance →
   Interface**. Narrow is the default; Wide gives messages and the composer
   50% more room when the pane is wide enough. The choice is saved on this device.
@@ -1009,6 +1023,10 @@ available rather than silently discarding it.
   **Agent settings** for Thinking where available and **Choose an avatar** to
   change the default picture. **More ways to add an agent** opens import and the
   marketplace from the first-agent screen.
+- Spheres offers seven ink-circle designs in **Choose an avatar** and
+  **Change avatar**. Emoji and image uploads are also available. Older stock
+  avatars display as Spheres artwork in this app, while saved custom pictures
+  show normally.
 - Claude Code's open settings follow saved changes to fields you haven't edited.
   Your unsaved edits stay in the form. If the same setting changed elsewhere,
   review the values beside that setting, then choose **Use latest** or **Keep mine**
@@ -1263,6 +1281,9 @@ tab, asks **Discard changes?** first; **Keep editing** keeps them.
   local installs. Upgrades preserve their previous state, including Bestie off
   when no choice was saved. Enable or disable them in **Manage plugins**; saved
   choices persist. A deliberate plugin-settings reset uses the current defaults.
+  New Spheres profiles start with chat, profiles, activity, link handling,
+  membership and moderation, and Codex agent support. Enable other features
+  in **Manage plugins**. Existing profiles keep their plugin settings.
 - A plugin's details in Manage plugins link to the Settings sections that hold
   its settings: sections it adds, such as GitHub comment authors, and Decisions
   API for a decision provider, such as TypeSafe. Only sections the Settings

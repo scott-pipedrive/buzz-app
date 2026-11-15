@@ -15,7 +15,7 @@ export type IdentitySnapshot =
       error?: string;
       recovery?: RecoveryState;
     }
-  | { status: "error"; error: string }
+  | { status: "error"; error: string; waitingForStorage?: true }
   | { status: "ready"; viewer: string };
 
 export type RecoveryResult = {
@@ -52,6 +52,7 @@ export function createIdentity() {
   let state: IdentitySnapshot = { status: "loading" };
   let disposed = false;
   let busy = false;
+  let restoreTimer: ReturnType<typeof setTimeout> | undefined;
   let recoveryGeneration = 0;
   let recoveryAttempt: Promise<{ attempt: string }> | undefined;
   const listeners = new Set<() => void>();
@@ -187,6 +188,17 @@ export function createIdentity() {
     update(
       restoring ? { status: "loading" } : { status: "missing", busy: true },
     );
+    // The OS can wait for a Keychain prompt. Keep the same request so a late
+    // approval can finish startup and a retry cannot queue another prompt.
+    if (restoring)
+      restoreTimer = setTimeout(() => {
+        update({
+          status: "error",
+          error:
+            "Secure storage is taking longer than usual. Check for a system prompt to unlock or allow access. The app will continue when secure storage responds.",
+          waitingForStorage: true,
+        });
+      }, 10_000);
     try {
       const viewer = await invoke<string | null>(command, args);
       // Restore finds no key; an expected old Buzz import finds another one.
@@ -206,6 +218,7 @@ export function createIdentity() {
           : { status: "missing", busy: false, error },
       );
     } finally {
+      if (restoring) clearTimeout(restoreTimer);
       busy = false;
     }
   }
@@ -260,6 +273,7 @@ export function createIdentity() {
     backup,
     dispose() {
       disposed = true;
+      clearTimeout(restoreTimer);
       void cancelRecovery();
       backup.dispose();
       listeners.clear();

@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   type ExternalApps,
@@ -62,14 +63,11 @@ export function ExternalConnectionSettings({
       <Header
         id="external-apps-title"
         title="External apps"
-        subtitle="Apps you authorize can use Buzz through this copy of the app."
+        subtitle={`Apps you authorize can use ${appName()} through this copy of the app.`}
       />
       <SettingsGroup layout="form">
         <p className="m-0 text-body-sm text-secondary">
-          Start setup in the external app. Buzz asks you to select an agent and
-          authorize access. Apps can renew valid approval for another 30 days.
-          Approval expires after 30 days without renewal. Apps can restore valid
-          access after a restart. Keys stay in Buzz. Keep Buzz open.
+          {`Start setup in the external app. ${appName()} asks you to select an agent and authorize access. Apps can renew valid approval for another 30 days. Approval expires after 30 days without renewal. Apps can restore valid access after a restart. Keys stay in ${appName()}. Keep ${appName()} open.`}
         </p>
         {grant ? (
           <PreferenceRow
@@ -125,8 +123,8 @@ export function ExternalConnectionSettings({
           title={`Revoke access for ${confirming.client}?`}
           description={
             confirming.live
-              ? "This ends the connection now. The app must ask for access again before it can use Buzz."
-              : "This removes the saved approval. The app must ask for access again before it can use Buzz."
+              ? `This ends the connection now. The app must ask for access again before it can use ${appName()}.`
+              : `This removes the saved approval. The app must ask for access again before it can use ${appName()}.`
           }
           pending={revoking}
           initialFocus={cancel}

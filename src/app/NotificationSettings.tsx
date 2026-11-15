@@ -1,3 +1,4 @@
+import { appName } from "../shared/app-name";
 import { SettingsGroup } from "../shared/design-system/ui/SettingsGroup";
 import { Header, InlineHeader } from "../shared/design-system/ui/Header";
 import { ToastNotice } from "../shared/design-system/ui/Toast";
@@ -319,7 +320,7 @@ export function NotificationSettings({
         )}
         {active && state.error && (
           <ToastNotice
-            title="Buzz couldn’t send the notification"
+            title={`${appName()} couldn’t send the notification`}
             description={state.error}
           />
         )}

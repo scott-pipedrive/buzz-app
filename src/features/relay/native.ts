@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import {
   artifactIncrementalCapability,
   artifactIncrementalFailure,
@@ -371,7 +372,7 @@ export function verifyNativeStored(values: readonly unknown[]) {
 }
 
 export const NOT_A_COMMUNITY_ERROR =
-  "That URL didn't look like a Buzz community. Enter a community URL like wss://communities.buzz.xyz.";
+  `That URL didn't look like a ${appName()} community. Enter a community URL like wss://communities.buzz.xyz.`;
 
 export async function nativeRelayInfo(community: string, signal?: AbortSignal) {
   const response = await nativeRelayRequest(community, "/", undefined, signal);

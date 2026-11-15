@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { isTauri } from "@tauri-apps/api/core";
 import {
   useEffect,
@@ -85,7 +86,7 @@ export function PairingSettings({
       if (attempt !== lifetime.current) return;
       if (client.viewer && viewer !== client.viewer)
         throw new Error(
-          "Your saved Buzz account doesn’t match this account. Open the matching account before pairing.",
+          `Your saved ${appName()} account doesn’t match this account. Open the matching account before pairing.`,
         );
       setAccount(viewer);
     } catch (error) {
@@ -144,13 +145,13 @@ export function PairingSettings({
   const confirmed = ["transferring", "complete"].includes(state.phase);
   const done = state.phase === "complete";
   const verificationInstructions =
-    "If your phone asks for a code, enter these digits and finish confirming on your phone. If it shows a code, check that the digits match. Then choose Codes match here to send your Buzz identity.";
+    `If your phone asks for a code, enter these digits and finish confirming on your phone. If it shows a code, check that the digits match. Then choose Codes match here to send your ${appName()} identity.`;
   const steps = [
     {
       id: "scan",
       title: "Scan QR code",
       detail:
-        "Open Buzz on your phone and choose Add community to scan the code shown here.",
+        `Open ${appName() === "Spheres" ? "the mobile app" : "Buzz"} on your phone and choose Add community to scan the code shown here.`,
       complete: scanned,
     },
     {
@@ -174,8 +175,7 @@ export function PairingSettings({
         Pair mobile
       </h2>
       <p className="mt-0 mb-6 text-body-sm text-muted">
-        Connect the Buzz mobile app to this community. Pairing is secured with
-        end-to-end encryption and a verification code.
+        {`Connect the ${appName() === "Spheres" ? "compatible" : "Buzz"} mobile app to this community. Pairing is secured with end-to-end encryption and a verification code.`}
       </p>
       <div className="w-full [container-type:inline-size]">
         <p aria-live="polite" className="sr-only">
@@ -196,7 +196,7 @@ export function PairingSettings({
                 <p role="status" className="text-body-sm text-muted">
                   {isTauri()
                     ? "Pairing uses this app’s native identity and is unavailable with the development broker. Restart with BUZZ_DEV_VIEWER empty to use native sign-in."
-                    : "Open the Buzz desktop app to pair your phone."}
+                    : `Open the ${appName()} desktop app to pair your phone.`}
                 </p>
               ) : (
                 <>
@@ -207,7 +207,7 @@ export function PairingSettings({
                       <Button disabled={reading} onClick={() => void prepare()}>
                         {reading
                           ? "Opening your account…"
-                          : "Use existing Buzz account"}
+                          : `Use existing ${appName()} account`}
                       </Button>
                     ) : (
                       <>
@@ -258,7 +258,7 @@ export function PairingSettings({
                   {state.phase === "qr" && (
                     <QrCode
                       svg={state.svg}
-                      alt="Scan this QR code with Buzz on your phone"
+                      alt={`Scan this QR code with ${appName() === "Spheres" ? "the mobile app" : "Buzz"} on your phone`}
                     />
                   )}
                   {state.phase === "code" && (

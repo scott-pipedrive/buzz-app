@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import * as React from "react";
 import { attentionOf, type WatchObject } from "../../features/agents/attention";
 import { relayOrigin } from "../../features/communities/destination";
@@ -350,7 +351,7 @@ export function createAttentionComponents({
             )}
             <PreferenceRow
               title="Attention"
-              subtitle={`Let ${agent.name} watch for updates and check in on a schedule. Runs while Buzz is open on this device.`}
+              subtitle={`Let ${agent.name} watch for updates and check in on a schedule. Runs while ${appName()} is open on this device.`}
             />
           </section>
         </SettingsGroup>

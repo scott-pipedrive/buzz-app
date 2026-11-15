@@ -1,3 +1,4 @@
+import { appName } from "../../../shared/app-name";
 import { transientStatus } from "../../../features/relay/errors";
 import { terminalOutcome } from "../../../features/agents/observer";
 import { retryRead } from "../../../features/relay/read-retry";
@@ -128,9 +129,9 @@ export function isRetryableAgentRead(error: unknown): boolean {
 
 const LINK_ERRORS: Record<string, string> = {
   identity_already_bound:
-    "This Builderlab account is linked to a different Buzz identity.",
+    `This Builderlab account is linked to a different ${appName()} identity.`,
   pubkey_already_bound:
-    "This Buzz identity is linked to a different Builderlab account.",
+    `This ${appName()} identity is linked to a different Builderlab account.`,
 };
 
 export function createAgentClient(
@@ -272,7 +273,7 @@ export function createAgentClient(
     if (typeof code === "string" && Object.hasOwn(LINK_ERRORS, code))
       throw new Error(LINK_ERRORS[code]);
     throw new Error(
-      `Could not link your Buzz identity to Builderlab (${
+      `Could not link your ${appName()} identity to Builderlab (${
         typeof code === "string" ? code : `HTTP ${response.status}`
       }).`,
     );
@@ -303,7 +304,7 @@ export function createAgentClient(
     const key = await owner.key().catch(() => null);
     signal.throwIfAborted();
     if (typeof key !== "string" || !/^[0-9a-f]{64}$/.test(key))
-      throw new Error("Set up your Buzz identity before creating an agent.");
+      throw new Error(`Set up your ${appName()} identity before creating an agent.`);
     const credential = session.credential();
     const bound = boundKey(await identityRequest("current", {}, signal));
     if (bound === key) {
@@ -339,7 +340,7 @@ export function createAgentClient(
       signal,
     );
     if (boundKey(verified) !== key)
-      throw new Error("Builderlab did not confirm your Buzz identity link.");
+      throw new Error(`Builderlab did not confirm your ${appName()} identity link.`);
     backupLinkedIdentity();
   }
   function backupLinkedIdentity() {

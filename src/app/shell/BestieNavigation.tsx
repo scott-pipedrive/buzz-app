@@ -1,5 +1,5 @@
 import { useContext, useSyncExternalStore, type ReactNode } from "react";
-import { agentAvatars } from "../../features/agents/avatar-packs";
+import { findPackAvatar } from "../../features/agents/avatar-packs";
 import { bestieChat } from "../../bundled/bestie/chat";
 import { UnreadBadge } from "../../bundled/channels/UnreadBadge";
 import channelStyles from "../../bundled/channels/Channels.module.css";
@@ -56,7 +56,7 @@ export function BestieNavigationProvider({
     session.channels.list,
   );
   const channel = bestieChat(channels.channels, viewer, promoted);
-  const pack = agentAvatars.find((item) => item.url === agent?.avatar);
+  const pack = findPackAvatar(agent?.avatar);
   const preview = useAvatarPreview(
     pack ? "" : (agent?.avatar ?? ""),
     connection.origin,

@@ -1,7 +1,11 @@
 import { localActivity, localWorkLabel, localWorkRoot } from "./local-activity";
 import type { RelaySession } from "../relay/session";
 import type { TypingEntry } from "../relay/typing";
-import { activityTranscript, type ToolItem } from "./activity-transcript";
+import {
+  activityTranscript,
+  type ToolItem,
+  type TranscriptItem,
+} from "./activity-transcript";
 
 type Snapshot = ReturnType<RelaySession["agentActivity"]["snapshot"]>;
 const verbs: Record<string, string> = {
@@ -15,9 +19,14 @@ const verbs: Record<string, string> = {
   think: "Working",
 };
 
+export const toolAwaitsPermission = (item: TranscriptItem) =>
+  item.type === "tool" &&
+  (item.status === "in_progress" || item.status === "pending") &&
+  !!item.permission &&
+  !item.permission.outcome;
+
 function toolLabel(tool: ToolItem): string {
-  if (tool.permission && !tool.permission.outcome)
-    return "Waiting for permission";
+  if (toolAwaitsPermission(tool)) return "Waiting for permission";
   if (tool.status === "pending") return "Preparing a tool";
   // These local MCP tools publish kind=other. Recognize only their exact names;
   // never infer an action by parsing an arbitrary shell command or tool title.
@@ -61,6 +70,7 @@ function toolLabel(tool: ToolItem): string {
 
 export type CurrentActivity = {
   label: string;
+  phase: "queued" | "working" | "permission";
   detailAvailability: "available" | "no-current-step" | "typing-only";
   /** Null is the channel conversation; undefined is genuinely unknown. */
   roots: (string | null | undefined)[];
@@ -80,6 +90,7 @@ export function currentActivity(
   const add = (agent: string, root: string | null | undefined) => {
     const activity: CurrentActivity = agents.get(agent) ?? {
       label: "Working",
+      phase: "working",
       detailAvailability: "typing-only",
       roots: [],
     };
@@ -140,6 +151,7 @@ export function currentActivity(
     const firstTool = tools[0];
     if (activity && firstTool) {
       activity.detailAvailability = "available";
+      if (tools.some(toolAwaitsPermission)) activity.phase = "permission";
       activity.label =
         tools.length > 1
           ? `Running ${tools.length} tools`
@@ -173,6 +185,7 @@ export function currentActivity(
     ];
     agents.set(agent, {
       label: localWorkLabel(work),
+      phase: work.state === "waiting" ? "queued" : "working",
       detailAvailability: "available",
       roots,
     });

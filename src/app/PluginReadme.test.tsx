@@ -48,6 +48,25 @@ it("leaves short READMEs fully visible without a disclosure", () => {
   expect(screen.queryByRole("button")).toBeNull();
 });
 
+it("uses the Spheres name in bundled prose while preserving commands and links", () => {
+  geometry(200);
+  document.documentElement.dataset.spheres = "";
+  try {
+    render(
+      <PluginReadme
+        text={"Open [Buzz](https://example.com/buzz) with `buzz auth desktop pair`."}
+      />,
+    );
+    expect(screen.getByRole("link", { name: "Spheres" })).toHaveAttribute(
+      "href",
+      "https://example.com/buzz",
+    );
+    expect(screen.getByText("buzz auth desktop pair").tagName).toBe("CODE");
+  } finally {
+    delete document.documentElement.dataset.spheres;
+  }
+});
+
 it("expands and collapses long READMEs and remeasures on resize", () => {
   const size = geometry(900);
   const view = render(<PluginReadme text="Long description." />);

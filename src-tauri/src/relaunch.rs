@@ -48,7 +48,7 @@ mod macos {
         }
         let env = app.env();
         let spawned = bundle()
-            .ok_or_else(|| "Buzz is not running from an app bundle".to_string())
+            .ok_or_else(|| concat!(env!("BUZZ_DISPLAY_NAME"), " is not running from an app bundle").to_string())
             .and_then(|bundle| {
                 relauncher(
                     Path::new("/usr/bin/open"),

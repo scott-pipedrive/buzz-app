@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { OnboardingBack } from "./OnboardingBack";
 import { useState } from "react";
 import { npubEncode } from "nostr-tools/nip19";
@@ -82,10 +83,10 @@ export function RestoreIdentity({
         <>
           <p>
             {current
-              ? "Choose the Buzz identity to restore on this device."
+              ? `Choose the ${appName()} identity to restore on this device.`
               : recovery.currentPubkey
                 ? "Your current identity isn’t in these backups. You can choose a previous identity."
-                : "Choose the Buzz identity to restore on this device."}
+                : `Choose the ${appName()} identity to restore on this device.`}
           </p>
           <p>This won’t change the identity linked to your account.</p>
           {recovery.failedCount > 0 && (

@@ -2,6 +2,7 @@
 // keeping that copy on the latest release. Each step runs as a declared
 // process; the copy lives apart from any `codex` the user installed, and
 // shares their `~/.codex` sign-in and settings.
+import { appName } from "../../shared/app-name";
 import { withProviderWords } from "../../features/agents/failure-words";
 import type {
   HostProcess,
@@ -85,7 +86,7 @@ async function printed(spawn: Spawn, id: string, count: number) {
   const { code, stdout, stderr } = await collect(spawn, id, []);
   const lines = stdout.trim().split("\n");
   if (code !== 0 || lines.length < count || lines.some((line) => !line))
-    throw new Error(stderr.trim() || `Buzz's Codex ${id} is unavailable`);
+    throw new Error(stderr.trim() || `${appName()}'s Codex ${id} is unavailable`);
   return lines;
 }
 
@@ -434,7 +435,7 @@ export class CodexSetup {
       this.refused.add(latest);
       const reason = `Codex ${latest} failed its test: ${message(error)}`;
       this.set({
-        notice: current ? `${reason}. Buzz keeps using ${current}.` : reason,
+        notice: current ? `${reason}. ${appName()} keeps using ${current}.` : reason,
       });
       throw new Error(reason);
     }

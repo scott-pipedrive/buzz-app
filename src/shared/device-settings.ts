@@ -1,3 +1,4 @@
+import { appName } from "./app-name";
 // Buzz preferences on this device that agents can read and change. Each is
 // defined by the feature that owns it and changes
 // only through that feature's own setter, so the UI, storage and every window
@@ -64,7 +65,7 @@ export function createDeviceSettings(definitions: readonly DeviceSetting[]) {
     const definition = typeof key === "string" ? byKey.get(key) : undefined;
     if (!definition)
       throw new Error(
-        `No Buzz setting ${JSON.stringify(key)}. Settings: ${[...byKey.keys()].join(", ")}.`,
+        `No ${appName()} setting ${JSON.stringify(key)}. Settings: ${[...byKey.keys()].join(", ")}.`,
       );
     return definition;
   };
@@ -98,7 +99,7 @@ export function createDeviceSettings(definitions: readonly DeviceSetting[]) {
           }, not ${JSON.stringify(value)}.`,
         );
       if (definition.live?.() === false)
-        throw new Error("Buzz is closing; the setting was not changed.");
+        throw new Error(`${appName()} is closing; the setting was not changed.`);
       definition.write(value as SettingValue);
       const after = state(definition);
       if (after.value !== value)

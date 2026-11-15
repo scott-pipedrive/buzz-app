@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { useState } from "react";
 import type { AgentViewProps } from "../../features/agents/service";
 import { Button } from "../../shared/design-system/ui/Button";
@@ -23,7 +24,7 @@ const MODES = options([
 ]);
 const MODE_DESCRIPTIONS: Record<MeshMode, string> = {
   chat: "Answers from the conversation alone, with no tools. Suits small models.",
-  agent: "Works with shell, project skills and Buzz tools.",
+  agent: `Works with shell, project skills and ${appName()} tools.`,
 };
 const SCOPES = options([
   ["thread", "One session per thread"],

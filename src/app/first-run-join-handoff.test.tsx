@@ -81,6 +81,7 @@ let relays: Record<string, Relay>;
 /** Every `relay_http` request in order, its JSON body parsed (`null` for a GET). */
 let requests: Array<{ community: string; path: string; body: unknown }>;
 let services: AppServices | undefined;
+let launchLinks: string[];
 beforeEach(() => {
   relays = {
     [relayA]: {
@@ -91,6 +92,7 @@ beforeEach(() => {
     [relayB]: { self: keypair().pubkey, admitted: true },
   };
   requests = [];
+  launchLinks = [];
   vi.useFakeTimers({ shouldAdvanceTime: true });
   vi.stubEnv("VITE_BUZZ_LIVE", "0");
   // First run signs in to Builderlab only in an FI build.
@@ -131,7 +133,7 @@ beforeEach(() => {
       return member.pubkey;
     }
     if (command === "get_os_idle_seconds") return 0;
-    if (command === "deep_link_take") return [];
+    if (command === "deep_link_take") return launchLinks.splice(0);
     if (command === "deep_link_watch") return null;
     if (command === "relay_sign")
       return signed(member, (args as { event: EventTemplate }).event);
@@ -346,6 +348,95 @@ const inviteRequests = () =>
   requests.filter(
     (r) => r.community === relayB && r.path.startsWith("/api/invites/"),
   );
+
+it("offers the packaged community and a separate profile restore on first run", async () => {
+  vi.stubEnv("VITE_BUZZ_FEDERATED_IDENTITY", "0");
+  vi.stubEnv("VITE_BUZZ_JOIN_ONBOARDING", "1");
+  vi.stubEnv("VITE_BUZZ_PACKAGED_COMMUNITY", relayA);
+  const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+  const current = createServices();
+  services = current;
+  render(<App services={current} />);
+
+  await user.click(await screen.findByRole("button", { name: "Join Spheres" }));
+  expect(
+    await screen.findByRole("textbox", { name: "Display name" }),
+  ).toBeVisible();
+  expect(screen.getByText(relayA)).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "Cancel" }));
+  await user.click(
+    await screen.findByRole("button", { name: "Restore an existing profile" }),
+  );
+  expect(
+    await screen.findByRole("heading", { name: "Enter your private key" }),
+  ).toBeVisible();
+  expect(vi.mocked(invoke).mock.calls.map(([command]) => command)).not.toContain(
+    "identity_create",
+  );
+});
+
+it("joins from a cold Spheres invite after the user names their profile and accepts the policy", async () => {
+  vi.stubEnv("VITE_BUZZ_FEDERATED_IDENTITY", "0");
+  vi.stubEnv("VITE_BUZZ_JOIN_ONBOARDING", "1");
+  vi.stubEnv("VITE_BUZZ_PACKAGED_COMMUNITY", relayA);
+  launchLinks.push(appInvite);
+  const target: Relay = { self: keypair().pubkey, admitted: false, policy };
+  relays[relayB] = target;
+  const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+  const current = createServices();
+  services = current;
+  render(<App services={current} />);
+
+  const name = await screen.findByRole("textbox", { name: "Display name" });
+  expect(screen.getByText(relayB)).toBeVisible();
+  expect(
+    vi
+      .mocked(invoke)
+      .mock.calls.some(([command]) => command === "identity_create"),
+  ).toBe(false);
+  expect(inviteRequests()).toEqual([]);
+  await user.type(name, "Ada in Spheres");
+  const join = screen.getByRole("button", { name: /^Join$/ });
+  expect(join).toBeDisabled();
+  await user.click(
+    screen.getByRole("checkbox", {
+      name: "I agree to this community’s Terms of Service.",
+    }),
+  );
+  await user.click(
+    screen.getByRole("checkbox", {
+      name: "I confirm that I am at least 18 years old.",
+    }),
+  );
+  await user.click(join);
+  await waitFor(() =>
+    expect(current.communities.snapshot()).toMatchObject({
+      selected: relayB,
+      memberships: [{ id: relayB }],
+    }),
+  );
+  expect(inviteRequests()).toEqual([
+    {
+      community: relayB,
+      path: "/api/invites/accept-policy",
+      body: {
+        code,
+        policy_version: policy.version,
+        age_confirmed: true,
+      },
+    },
+    {
+      community: relayB,
+      path: "/api/invites/claim",
+      body: { code, policy_receipt: "policy-receipt" },
+    },
+  ]);
+  expect(JSON.parse(target.profile?.content ?? "{}")).toMatchObject({
+    name: "Ada in Spheres",
+  });
+  expect(current.invites.snapshot()).toBeUndefined();
+});
+
 /** Continue past the prefilled address to the access step, which holds the code. */
 async function accessStep(
   user: ReturnType<typeof userEvent.setup>,

@@ -1,9 +1,9 @@
-// An agent card as a picture: avatar-colored foil around a white panel, the Buzz
-// mark, the agent's picture, its name, and its harness and model as stats.
+// An agent card as a picture with the app's artwork, agent portrait and stats.
 // It is the same in either theme, as a thing handed to someone else.
 
 import foilTextureUrl from "./assets/card-foil.webp";
 import { fallbackAgentCardColor } from "./agent-card-color";
+import { appName } from "../../shared/app-name";
 
 export const CARD_WIDTH = 820;
 export const CARD_HEIGHT = 1230;
@@ -15,6 +15,9 @@ const EDGE = 70;
 export const CARD_PICTURE = { x: 110, y: 170, size: 600, radius: 48 };
 const INK = "#121214";
 const MUTED = "#6e6e76";
+const SPHERES_PAPER = "#fffaf3";
+const SPHERES_BORDER = "#e6d6c1";
+const SPHERES_RULE = "#e4d7c7";
 /** `public/buzz-mark.svg`, traced here since an SVG image may not draw on a
  * canvas everywhere. */
 const MARK =
@@ -157,12 +160,12 @@ function foil(
   }
 }
 
-function panel(context: CanvasRenderingContext2D) {
+function panel(context: CanvasRenderingContext2D, fill: string) {
   const { inset, radius } = PANEL;
   const width = CARD_WIDTH - inset * 2;
   const height = CARD_HEIGHT - inset * 2;
   rounded(context, inset, inset, width, height, radius);
-  context.fillStyle = "#ffffff";
+  context.fillStyle = fill;
   context.fill();
 }
 
@@ -170,6 +173,7 @@ function picture(
   context: CanvasRenderingContext2D,
   name: string,
   image: HTMLImageElement | undefined,
+  spheres: boolean,
 ) {
   const { x, y, size, radius } = CARD_PICTURE;
   context.save();
@@ -193,11 +197,11 @@ function picture(
     );
   } else {
     const tile = context.createLinearGradient(x, y, x + size, y + size);
-    tile.addColorStop(0, "#efe9f8");
-    tile.addColorStop(1, "#e3eef9");
+    tile.addColorStop(0, spheres ? "#f0e5d6" : "#efe9f8");
+    tile.addColorStop(1, spheres ? "#e1ece9" : "#e3eef9");
     context.fillStyle = tile;
     context.fillRect(x, y, size, size);
-    context.fillStyle = "#6b6482";
+    context.fillStyle = spheres ? "#226578" : "#6b6482";
     context.font = `500 240px ${FONT}`;
     context.textAlign = "center";
     context.textBaseline = "middle";
@@ -252,9 +256,32 @@ function stat(
   );
 }
 
-function rule(context: CanvasRenderingContext2D, y: number) {
-  context.fillStyle = "rgba(18,18,20,0.12)";
+function rule(context: CanvasRenderingContext2D, y: number, spheres: boolean) {
+  context.fillStyle = spheres ? SPHERES_RULE : "rgba(18,18,20,0.12)";
   context.fillRect(EDGE, y, CARD_WIDTH - EDGE * 2, 2);
+}
+
+async function loadArtwork(src: string) {
+  const image = new Image();
+  image.src = src;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([
+      image.decode(),
+      new Promise((_, reject) => {
+        timer = setTimeout(
+          () => reject(new Error("Card artwork unavailable")),
+          1000,
+        );
+      }),
+    ]);
+    return image;
+  } catch {
+    image.removeAttribute("src");
+    return undefined;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /** The card as a PNG. Throws where no canvas draws or the picture's origin
@@ -271,6 +298,7 @@ export async function drawShareCard(card: {
   canvas.height = CARD_HEIGHT;
   const context = canvas.getContext("2d");
   if (!context) throw new Error("Couldn’t draw the card.");
+  const spheres = appName() === "Spheres";
   // The interface face may still be loading when Export is first chosen; a
   // slow one gives way to the fallback faces rather than holding the card.
   await Promise.race([
@@ -283,44 +311,47 @@ export async function drawShareCard(card: {
     ),
     new Promise((resolve) => setTimeout(resolve, 1000)),
   ]);
-  let texture: HTMLImageElement | undefined;
-  let textureTimer: ReturnType<typeof setTimeout> | undefined;
-  try {
-    texture = new Image();
-    texture.src = foilTextureUrl;
-    await Promise.race([
-      texture.decode(),
-      new Promise((_, reject) => {
-        textureTimer = setTimeout(
-          () => reject(new Error("Foil texture unavailable")),
-          1000,
-        );
-      }),
-    ]);
-  } catch {
-    if (texture) texture.src = "";
-    texture = undefined;
-  } finally {
-    clearTimeout(textureTimer);
-  }
+  const [texture, spheresMark] = await Promise.all([
+    loadArtwork(spheres ? "/spheres/paper-grain.png" : foilTextureUrl),
+    spheres ? loadArtwork("/spheres-mark.svg") : undefined,
+  ]);
   context.save();
   rounded(context, 0, 0, CARD_WIDTH, CARD_HEIGHT, CARD_RADIUS);
   context.clip();
-  foil(
-    context,
-    card.name,
-    card.accentColor ?? fallbackAgentCardColor(card.name),
-    texture,
-  );
-  panel(context);
-  mark(context);
+  if (spheres) {
+    context.fillStyle = SPHERES_BORDER;
+    context.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT);
+    const grain = texture && context.createPattern(texture, "repeat");
+    if (grain) {
+      context.save();
+      context.globalAlpha = 0.38;
+      context.fillStyle = grain;
+      context.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT);
+      context.restore();
+    }
+    panel(context, SPHERES_PAPER);
+    if (spheresMark) context.drawImage(spheresMark, EDGE, EDGE - 6, 52, 52);
+  } else {
+    foil(
+      context,
+      card.name,
+      card.accentColor ?? fallbackAgentCardColor(card.name),
+      texture,
+    );
+    panel(context, "#ffffff");
+    mark(context);
+  }
   context.fillStyle = INK;
   context.font = `600 24px ${FONT}`;
   spaced(context, "1.5px");
   context.textAlign = "right";
   context.textBaseline = "middle";
-  context.fillText("BUZZ AGENT", CARD_WIDTH - EDGE, EDGE + 20);
-  picture(context, card.name, card.picture);
+  context.fillText(
+    spheres ? "SPHERES AGENT" : "BUZZ AGENT",
+    CARD_WIDTH - EDGE,
+    EDGE + 20,
+  );
+  picture(context, card.name, card.picture, spheres);
   context.fillStyle = INK;
   context.font = `600 60px ${FONT}`;
   spaced(context, "0px");
@@ -331,9 +362,9 @@ export async function drawShareCard(card: {
     EDGE,
     890,
   );
-  rule(context, 940);
+  rule(context, 940, spheres);
   stat(context, "HARNESS", card.harness, 1003);
-  rule(context, 1048);
+  rule(context, 1048, spheres);
   stat(context, "MODEL", card.model, 1111);
   context.restore();
   const blob = await new Promise<Blob | null>((resolve) =>

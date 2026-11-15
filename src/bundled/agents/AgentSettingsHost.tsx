@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { ProviderDialog } from "./ProviderDialog";
 import { useId, useRef, useState, type ReactNode } from "react";
 import type {
@@ -512,8 +513,7 @@ export function MigrationPreview({
         </span>
       </div>
       <p className="m-0 text-body-sm text-secondary">
-        The provider changes when you save settings. Your agent will continue
-        the conversation in Buzz.
+        {`The provider changes when you save settings. Your agent will continue the conversation in ${appName()}.`}
         {warning && ` ${warning}`}
       </p>
       {discardDraft && (

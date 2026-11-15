@@ -1,3 +1,4 @@
+import { previousAppName } from "../../shared/app-name";
 import {
   useCallback,
   useContext,
@@ -461,7 +462,7 @@ export function AgentConnectionForm({
                           ? "Review the settings to import this agent and continue your conversation."
                           : "Choose a harness to continue."}
                     {!done &&
-                      " Stop this agent in old Buzz before connecting, so only one app replies."}
+                      ` Stop this agent in ${previousAppName()} before connecting, so only one app replies.`}
                   </p>
                 </div>
                 {!done && (

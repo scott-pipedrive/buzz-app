@@ -1040,7 +1040,11 @@ function InboxList({
               (inbox.status === "ready" || feed.status === "ready") &&
               !loading &&
               !failure && (
-                <div className={styles.empty} role="status">
+                <div
+                  className={styles.empty}
+                  data-activity-empty=""
+                  role="status"
+                >
                   <EmptyState
                     icon={caughtUp ? <CheckIcon /> : <BellIcon />}
                     title={

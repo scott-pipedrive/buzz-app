@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { workflowLabel } from "../../features/relay/workflow-attribution";
 import {
   useIdentityNames,
@@ -1695,7 +1696,9 @@ export function SearchResults({
       displayQuery={displayQuery}
       onDisplayQueryChange={updateDisplayQuery}
       input={input}
-      label={scopedChannelId ? "Search this conversation" : "Search Buzz"}
+      label={
+        scopedChannelId ? "Search this conversation" : `Search ${appName()}`
+      }
       scopeAction={
         scopedChannelId && session.searchSort && parsed.text ? (
           <MenuRoot>

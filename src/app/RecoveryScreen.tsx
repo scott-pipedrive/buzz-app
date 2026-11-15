@@ -1,5 +1,6 @@
-import { Button } from "../shared/design-system/ui/Button";
 // FOUNDATION: Recovery must remain usable without executing any plugin.
+import { appName } from "../shared/app-name";
+import { Button } from "../shared/design-system/ui/Button";
 import { useSyncExternalStore } from "react";
 import type { PluginManager } from "../plugins/manager";
 
@@ -12,8 +13,8 @@ export function RecoveryScreen({ plugins }: { plugins: PluginManager }) {
   const { reason, canReset } = configuration;
   return (
     <section className="rounded-3xl border border-line bg-surface p-8 shadow-surface">
-      <h1>Couldn’t open Buzz</h1>
-      <p>Buzz couldn’t read its plugin configuration.</p>
+      <h1>{`Couldn’t open ${appName()}`}</h1>
+      <p>{`${appName()} couldn’t read its plugin configuration.`}</p>
       <details>
         <summary>Error details</summary>
         <p>{reason}</p>
@@ -38,8 +39,7 @@ export function RecoveryScreen({ plugins }: { plugins: PluginManager }) {
         </>
       ) : (
         <p>
-          If retrying does not help, restart Buzz. Share the error details with
-          the Buzz team if it still cannot open.
+          {`If retrying does not help, restart ${appName()}. Share the error details with the ${appName()} team if it still cannot open.`}
         </p>
       )}
       {error && <p role="alert">{error}</p>}

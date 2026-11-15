@@ -22,6 +22,8 @@ const NEXT: &str = "buzz-next-tab";
 const PREVIOUS: &str = "buzz-previous-tab";
 const PASTE_PLAIN: &str = "buzz-paste-plain";
 const SETTINGS: &str = "buzz-settings";
+const REPLAY_WELCOME: &str = "spheres-replay-welcome";
+const WELCOME_WINDOW: &str = "spheres-welcome-preview";
 // The focused composer marks the paste that follows as raw, whether or not a
 // key fired. A focused guest browser takes the paste itself.
 const PASTE_PLAIN_REQUEST: &str = "if (browserSessionId === null) document.activeElement?.dispatchEvent(new Event(\"buzz:paste-plain\"));";
@@ -90,6 +92,18 @@ pub(crate) fn menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
     }
     if let Some(window) = menu.get(WINDOW_SUBMENU_ID) {
         if let Some(window) = window.as_submenu() {
+            if app.config().product_name.as_deref() == Some("Spheres") {
+                window.append_items(&[
+                    &PredefinedMenuItem::separator(app)?,
+                    &MenuItem::with_id(
+                        app,
+                        REPLAY_WELCOME,
+                        "Replay Welcome Animation",
+                        true,
+                        None::<&str>,
+                    )?,
+                ])?;
+            }
             window.append_items(&[
                 &PredefinedMenuItem::separator(app)?,
                 &MenuItem::with_id(app, NEXT, "Show Next Tab", true, Some("Ctrl+Tab"))?,
@@ -109,12 +123,28 @@ pub(crate) fn menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
 
 pub(crate) fn handle<R: Runtime>(app: &AppHandle<R>, event: tauri::menu::MenuEvent) {
     let script = match event.id().as_ref() {
-        CLOSE => format!("{{ const tabEvent = \"buzz:close-active-tab\";\n{REQUEST}}}"),
+        CLOSE => {
+            if let Some(preview) = app.get_webview_window(WELCOME_WINDOW) {
+                if preview.is_focused().unwrap_or(false) {
+                    if let Err(error) = preview.close() {
+                        eprintln!("Could not close the Spheres welcome preview: {error}");
+                    }
+                    return;
+                }
+            }
+            format!("{{ const tabEvent = \"buzz:close-active-tab\";\n{REQUEST}}}")
+        }
         CLOSE_ALL => format!("{{ const tabEvent = \"buzz:close-all-tabs\";\n{REQUEST}}}"),
         // A block keeps the binding out of the page's global scope.
         NEXT => format!("{{ const tabEvent = \"buzz:next-tab\";\n{SWITCH}}}"),
         PREVIOUS => format!("{{ const tabEvent = \"buzz:previous-tab\";\n{SWITCH}}}"),
         SETTINGS => return open_settings(app),
+        REPLAY_WELCOME => {
+            if let Err(error) = replay_welcome(app) {
+                eprintln!("Could not replay the Spheres welcome animation: {error}");
+            }
+            return;
+        }
         PASTE_PLAIN => {
             // On the UI thread the script is sent to the page at once, so it
             // runs before the paste command that follows it.
@@ -124,6 +154,27 @@ pub(crate) fn handle<R: Runtime>(app: &AppHandle<R>, event: tauri::menu::MenuEve
         _ => return,
     };
     dispatch_request(app, &script, event.id().as_ref());
+}
+
+fn replay_welcome<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
+    if let Some(preview) = app.get_webview_window(WELCOME_WINDOW) {
+        preview.show()?;
+        preview.unminimize()?;
+        preview.set_focus()?;
+        return preview.reload();
+    }
+    tauri::WebviewWindowBuilder::new(
+        app,
+        WELCOME_WINDOW,
+        tauri::WebviewUrl::App("spheres-welcome.html".into()),
+    )
+    .title("Spheres Welcome")
+    .inner_size(960.0, 640.0)
+    .min_inner_size(480.0, 400.0)
+    .center()
+    .disable_drag_drop_handler()
+    .build()?;
+    Ok(())
 }
 
 // Unlike a tab request, Settings brings back a hidden or minimized window, as

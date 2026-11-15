@@ -69,7 +69,10 @@ vi.mock("motion/react", async (actual) => ({
   useReducedMotion: () => motion.reduced,
 }));
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  document.documentElement.removeAttribute("data-spheres");
+});
 // jsdom has no object URLs; an upload previews its file through one.
 beforeEach(() => {
   vi.stubGlobal(
@@ -321,6 +324,37 @@ it("keeps the selected avatar when its settings are closed before creating", asy
     picture: avatar.url,
     config: { reply: "Hi there" },
   });
+});
+
+it("creates with the Spheres artwork picked in the avatar editor", async () => {
+  document.documentElement.setAttribute("data-spheres", "");
+  const { agents, dialog, user } = setup(
+    [echo],
+    undefined,
+    undefined,
+    undefined,
+    true,
+  );
+  await user.type(within(dialog).getByLabelText("Name"), "Nova");
+  await user.click(
+    within(dialog).getByRole("button", { name: "Choose an avatar" }),
+  );
+  expect(within(dialog).getByRole("tab", { name: "Spheres" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  const options = within(dialog).getByRole("group", { name: "Agent avatars" });
+  const yellow = within(options).queryByRole("button", { name: "Yellow" });
+  const choice =
+    yellow ?? within(options).getByRole("button", { name: "Cyan" });
+  await user.click(choice);
+  await user.click(createButton());
+  expect(agents.create).toHaveBeenCalledExactlyOnceWith(
+    expect.objectContaining({
+      name: "Nova",
+      picture: `https://hellospheres.com/spheres-preview/avatars/v1/${yellow ? "yellow" : "cyan"}.png`,
+    }),
+  );
 });
 
 it("cancels an in-flight Gloopy swap before switching to Emoji", async () => {

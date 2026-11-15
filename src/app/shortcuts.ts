@@ -1,3 +1,4 @@
+import { appName } from "../shared/app-name";
 import { isTauri } from "@tauri-apps/api/core";
 import { isApplePlatform } from "../features/shortcuts/format";
 import type { ShortcutsService } from "../features/shortcuts/service";
@@ -145,7 +146,7 @@ export function registerAppShortcuts(
   remove.push(
     shortcuts.registerHost({
       id: "app-reload",
-      title: "Reload Buzz",
+      title: `Reload ${appName()}`,
       binding: { key: "r", mod: true },
       order: HOST_SHORTCUT_ORDER.reload,
       allowInEditable: true,

@@ -1,3 +1,4 @@
+import { appName } from "../shared/app-name";
 import { SettingsGroup } from "../shared/design-system/ui/SettingsGroup";
 import { InlineHeader } from "../shared/design-system/ui/Header";
 import { ToastNotice } from "../shared/design-system/ui/Toast";
@@ -33,7 +34,7 @@ export function UnreadIndicatorSettings({
                   default:
                     "Allow notifications and badges to show the unread dot.",
                   setup: "Set up Dock badges to show the unread dot.",
-                  enabled: "Buzz can show Dock badges.",
+                  enabled: `${appName()} can show Dock badges.`,
                   disabled:
                     "Dock badges are off. Turn them on in macOS System Settings.",
                   denied:

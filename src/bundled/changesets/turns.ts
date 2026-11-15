@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { ownerCanvas } from "../../features/agent-harness/project";
 import type { ChannelMessage } from "../../features/relay/contracts";
 import type { RelaySession } from "../../features/relay/session";
@@ -141,7 +142,7 @@ export function createTurns(git: Git, storage: Storage = localStorage) {
   const recorded = (id: string, index: number) => {
     const found = find(id, index);
     if (!found)
-      throw new Unreadable("This changeset was recorded in another Buzz.");
+      throw new Unreadable(`This changeset was recorded in another ${appName()}.`);
     return found;
   };
   const remember = (key: string, files: Promise<ChangedFile[]>) => {

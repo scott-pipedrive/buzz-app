@@ -1,4 +1,5 @@
 import { OnboardingBack } from "./OnboardingBack";
+import { appName } from "../../shared/app-name";
 import { useId, useRef, useState } from "react";
 import { npubEncode } from "nostr-tools/nip19";
 import { useFileDrop } from "../messages/use-file-drop";
@@ -125,13 +126,12 @@ export function KeyImport({
                 Enter your private key
               </h1>
               <p className="text-body text-subtle">
-                Paste your private key to sign in to Buzz. You can also select
-                or drop a text file with your key.
+                Paste your private key to restore your {appName()} profile. You
+                can also select or drop a text file with your key.
               </p>
               {automaticBackup && (
                 <p className="text-body-sm text-subtle">
-                  Buzz will automatically sync this key with your Builderlab
-                  account
+                  {`${appName()} will automatically sync this key with your Builderlab account`}
                   {automaticBackup === "kept" &&
                     " unless you chose to manage it yourself"}
                   . Block can use that copy to restore your identity, including

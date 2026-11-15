@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { lockSoloModelPicks } from "./solo-model-picks-lock";
 
 const databaseName = "buzz-solo-model-picks-v1";
@@ -23,7 +24,7 @@ function openDatabase() {
     request.onerror = () => reject(request.error);
     request.onblocked = () => {
       blocked = true;
-      reject(new Error("Close other Buzz windows to open saved choices."));
+      reject(new Error(`Close other ${appName()} windows to open saved choices.`));
     };
   });
 }

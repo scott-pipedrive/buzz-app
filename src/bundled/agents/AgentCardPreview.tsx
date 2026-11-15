@@ -16,6 +16,7 @@ import {
   CARD_WIDTH,
 } from "../../features/agents/share-card";
 import { fallbackAgentCardColor } from "../../features/agents/agent-card-color";
+import { appName } from "../../shared/app-name";
 import styles from "./AgentCardPreview.module.css";
 
 /** The drawn card's proportions and corner, which the preview clips to. */
@@ -71,6 +72,7 @@ export function AgentCardPreview({
   alt: string;
   accentColor?: string | undefined;
 }) {
+  const spheres = appName() === "Spheres";
   const frame = useRef<number | undefined>(undefined);
   const pending = useRef<
     { element: HTMLDivElement; x: number; y: number } | undefined
@@ -160,7 +162,7 @@ export function AgentCardPreview({
                   setLoaded({ src, animate: false, entered: true })
                 }
               />
-              {portrait && (
+              {portrait && !spheres && (
                 <span
                   className={styles.portrait}
                   data-loaded={portraitLoaded === portrait}
@@ -175,7 +177,9 @@ export function AgentCardPreview({
                   />
                 </span>
               )}
-              <span className={styles.sheen} aria-hidden="true" />
+              {!spheres && (
+                <span className={styles.sheen} aria-hidden="true" />
+              )}
             </div>
           </div>
         </div>

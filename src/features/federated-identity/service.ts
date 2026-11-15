@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { Service, type Context } from "@deepseek-ai/cordis";
 import { invoke, type InvokeArgs } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
@@ -191,7 +192,7 @@ export class FederatedIdentityService
   };
   private async operation(command: string, args?: InvokeArgs) {
     if (!nativeIdentityEnabled() || this.shared.closed)
-      throw new Error("Federated identity requires Buzz desktop");
+      throw new Error(`Federated identity requires ${appName()} desktop`);
     const epoch = this.shared.epoch;
     try {
       const snapshot = await (args
@@ -216,7 +217,7 @@ export class FederatedIdentityService
   }
   async cancelSignIn() {
     if (!nativeIdentityEnabled() || this.shared.closed)
-      throw new Error("Federated identity requires Buzz desktop");
+      throw new Error(`Federated identity requires ${appName()} desktop`);
     await invoke("federated_identity_cancel_sign_in");
     await this.operation("federated_identity_snapshot");
   }
@@ -339,7 +340,7 @@ export async function askAgain(relay: string) {
 
 async function communityRequiresSignIn(relay: string) {
   if (!nativeIdentityEnabled())
-    throw new Error("Federated identity requires Buzz desktop");
+    throw new Error(`Federated identity requires ${appName()} desktop`);
   try {
     return await invoke<boolean>("federated_identity_requires", { relay });
   } catch (error) {
@@ -407,7 +408,7 @@ class CommunitySession implements FederatedIdentity {
   };
   private async operation(command: string, args?: { revision?: string }) {
     if (!nativeIdentityEnabled())
-      throw new Error("Federated identity requires Buzz desktop");
+      throw new Error(`Federated identity requires ${appName()} desktop`);
     const epoch = this.epoch;
     try {
       const snapshot = await invoke<SessionSnapshot>(command, {

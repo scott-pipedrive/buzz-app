@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type RefObject } from "react";
 import type { Agent, Agents } from "../../features/agents/service";
-import { agentAvatars } from "../../features/agents/avatar-packs";
+import { findPackAvatar } from "../../features/agents/avatar-packs";
 import { Button } from "../../shared/design-system/ui/Button";
 import { Dialog } from "../../shared/design-system/ui/Dialog";
 import type { CommunityReader } from "../../features/communities/service";
@@ -31,9 +31,7 @@ export function AgentIdentityDialog({
     if (!community) setScopeOpen(false);
   }, [community]);
   const [avatar, setAvatar] = useState<AvatarSelection>(() => ({
-    kind: agentAvatars.some((item) => item.url === agent.picture)
-      ? "gloopie"
-      : "image",
+    kind: findPackAvatar(agent.picture) ? "gloopie" : "image",
     picture: agent.picture ?? "",
   }));
   const [pending, setPending] = useState(false);

@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { createUnreadIndicator } from "./indicator";
 import { Service, type Context } from "@deepseek-ai/cordis";
 import { createContributions } from "../../plugins/contributions";
@@ -362,7 +363,7 @@ export class NotificationsService extends Service implements Notifications {
     valid: () => boolean,
     eligible: () => NotificationEligibility = () => true,
     text: () => NotificationText = () => ({
-      title: "Buzz",
+      title: appName(),
       body: `New ${label.toLowerCase()}`,
     }),
   ) {

@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import {
   GithubLogoIcon,
   GoogleDriveLogoIcon,
@@ -141,7 +142,7 @@ export function LinkLabel({
     if (kind === "channel") label = "Channel";
     else if (kind === "message") label = "Message";
     else if (kind === "thread") label = "Thread";
-    else if (kind === "buzz") label = "Buzz";
+    else if (kind === "buzz") label = appName();
   }
   // The channel icon already supplies the visual hash.
   if (kind === "channel" && label.startsWith("#")) label = label.slice(1);

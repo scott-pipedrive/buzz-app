@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { useEffect, useState } from "react";
 import { AlertDialog } from "../../shared/design-system/ui/AlertDialog";
 import { Button } from "../../shared/design-system/ui/Button";
@@ -76,7 +77,7 @@ export function SignOutDialog({
   return (
     <AlertDialog
       title="Remove your key from this device?"
-      description="Your private key is how you sign in to Buzz. This removes it from this device’s secure storage and signs you out of your organization, Builderlab and hosted communities. Account backups and copies saved elsewhere stay. Save a copy so you can sign back in."
+      description={`Your private key is how you sign in to ${appName()}. This removes it from this device’s secure storage and signs you out of your organization, Builderlab and hosted communities. Account backups and copies saved elsewhere stay. Save a copy so you can sign back in.`}
       onClose={onClose}
       pending={pending}
       actions={
@@ -103,7 +104,7 @@ export function SignOutDialog({
           onCheckedChange={setHaveKey}
         />
         <Checkbox
-          label="Also erase everything else Buzz stores on this device"
+          label={`Also erase everything else ${appName()} stores on this device`}
           checked={wipe}
           disabled={pending || wipeRefusal !== null}
           onCheckedChange={(checked) => {
@@ -147,9 +148,9 @@ export function SignOutDialog({
         )}
         {!wipe && (
           <p className="text-body-sm text-muted">
-            Your settings, agents and other Buzz data stay on this device. Sign
-            back in with this key and they’ll be here. Agents start only for
-            this key.
+            Your settings, agents and other {appName()} data stay on this
+            device. Sign back in with this key and they’ll be here. Agents start
+            only for this key.
           </p>
         )}
       </div>

@@ -1,3 +1,4 @@
+import { appName } from "../../../shared/app-name";
 import { isTauri } from "@tauri-apps/api/core";
 
 export const browserLoginAvailable = () => isTauri();
@@ -11,7 +12,7 @@ export function oauthTarget(
     url = new URL(value);
   } catch {
     throw new Error(
-      "Builderlab sign-in is not configured for this Buzz build.",
+      `Builderlab sign-in is not configured for this ${appName()} build.`,
     );
   }
   if (
@@ -22,7 +23,7 @@ export function oauthTarget(
     url.href.includes("#")
   )
     throw new Error(
-      "This Buzz build does not support the configured Builderlab sign-in address.",
+      `This ${appName()} build does not support the configured Builderlab sign-in address.`,
     );
   return `${url.href.replace(/\/$/, "")}/api/goose`;
 }

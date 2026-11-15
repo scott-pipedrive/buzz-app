@@ -1597,7 +1597,8 @@ and earlier Buzz write, without memory. The PNG is an 820×1230 agent card
 (`src/features/agents/share-card.ts`): foil around the picture, the name, and
 its harness and model, with the letter tile when the picture is missing, takes
 over 5 seconds to load, or can't be read back, and a transparent pixel when no
-card can be drawn. The manifest is in a `buzz_agent_snapshot` tEXt chunk.
+card can be drawn. Spheres uses a paper border and the Spheres mark. Both
+designs store the manifest in the same `buzz_agent_snapshot` tEXt chunk.
 Exporting the card previews it first and saves the bytes shown; sending the
 agent uploads the same card. Desktop saves it
 to Downloads through `file_download` (`src-tauri/src/relay.rs`), as media is

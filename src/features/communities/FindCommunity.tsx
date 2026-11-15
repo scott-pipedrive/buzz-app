@@ -1,8 +1,11 @@
+import { appName } from "../../shared/app-name";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { CircleNotchIcon } from "../../shared/design-system/icons/index";
 import { Avatar } from "../../shared/design-system/ui/Avatar";
 import { Button } from "../../shared/design-system/ui/Button";
 import { Checkbox } from "../../shared/design-system/ui/Checkbox";
+import { Field } from "../../shared/design-system/ui/Field";
+import { Input } from "../../shared/design-system/ui/Input";
 import { LoadingRegion } from "../../shared/design-system/ui/LoadingRegion";
 import {
   FindCommunityError,
@@ -31,7 +34,7 @@ const FAILURES: Record<FindFailure, { message: string; retry: boolean }> = {
     message: "Could not reach the relay. Check your connection and try again.",
     retry: true,
   },
-  "not-buzz": { message: "This address isn’t a Buzz community.", retry: false },
+  "not-buzz": { message: `This address isn’t a ${appName()} community.`, retry: false },
   "no-community": {
     message: "No community is set up at this address.",
     retry: false,
@@ -54,6 +57,8 @@ export function FindCommunity({
   request = nativeRelayFetch,
   titleId,
   onboarding = false,
+  askDisplayName = false,
+  fallbackName,
 }: {
   url: string;
   onCancel: () => void;
@@ -61,6 +66,9 @@ export function FindCommunity({
   titleId?: string;
   /** Uses the first-run page action layout; in-app dialogs keep their own. */
   onboarding?: boolean;
+  /** First-run join collects the name before creating the device identity. */
+  askDisplayName?: boolean;
+  fallbackName?: string | undefined;
 } & (
   | {
       /** Takes over a found community instead of showing Join Community; the lookup page stays until the caller moves on. */
@@ -73,6 +81,7 @@ export function FindCommunity({
       onJoin: (
         found: FoundCommunity,
         consent: JoinConsent,
+        displayName: string,
       ) => Promise<void> | void;
       /**
        * Joins a found community at once instead of showing Join Community,
@@ -93,20 +102,30 @@ export function FindCommunity({
   const [state, setState] = useState<State>({ status: "finding" });
   const [adult, setAdult] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [displayName, setDisplayName] = useState("");
+  const [joinError, setJoinError] = useState("");
   // How the pending `onJoin` began: from Join, or at once for `autoJoin`.
   const [joining, setJoining] = useState<"confirmed" | "auto">();
   const inFlight = useRef<AbortController>(null);
+  const submitting = useRef(false);
   const join = async (
     found: FoundCommunity,
     consent: JoinConsent,
     how: "confirmed" | "auto",
   ) => {
+    if (submitting.current) return;
+    submitting.current = true;
+    setJoinError("");
     setJoining(how);
     try {
-      await onJoin?.(found, consent);
-    } catch {
-      // The caller shows what a failed join means; here it only ends the wait.
+      await onJoin?.(found, consent, displayName.trim());
+    } catch (error) {
+      if (askDisplayName)
+        setJoinError(
+          error instanceof Error ? error.message : "Couldn’t join community.",
+        );
     } finally {
+      submitting.current = false;
       setJoining(undefined);
     }
   };
@@ -115,7 +134,7 @@ export function FindCommunity({
     const given = consentGiven?.(found) ?? false;
     setState({ status: "found", found, consentGiven: given });
     const asked = consentAsked(found.policy, given);
-    if (autoJoin && !asked.age && !asked.agreement)
+    if (autoJoin && !askDisplayName && !asked.age && !asked.agreement)
       void join(
         found,
         given ? ACCOUNT_CONSENT : { adult: false, agreed: false },
@@ -206,13 +225,27 @@ export function FindCommunity({
     );
   }
   const { found, consentGiven: given } = state;
-  const name = communityName(found.name, found.host);
+  const discoveredName = communityName(found.name, found.host);
+  const name =
+    discoveredName === found.host
+      ? (fallbackName ?? discoveredName)
+      : discoveredName;
   const policy = found.policy;
   const { age: needsAge, agreement: needsAgreement } = consentAsked(
     policy,
     given,
   );
   const consented = (!needsAge || adult) && (!needsAgreement || agreed);
+  const disabled =
+    !consented || Boolean(joining) || (askDisplayName && !displayName.trim());
+  const submit = () => {
+    if (!disabled)
+      void join(
+        found,
+        given ? ACCOUNT_CONSENT : { adult, agreed },
+        "confirmed",
+      );
+  };
   return (
     <>
       {heading("Join Community")}
@@ -230,6 +263,28 @@ export function FindCommunity({
           <p className="m-0 break-all text-body text-subtle">{found.url}</p>
         </div>
       </div>
+      {askDisplayName && (
+        <Field label="Display name" disabled={Boolean(joining)}>
+          <Input
+            autoComplete="nickname"
+            maxLength={100}
+            required
+            spellCheck={false}
+            value={displayName}
+            disabled={Boolean(joining)}
+            onChange={(event) => {
+              setDisplayName(event.target.value);
+              setJoinError("");
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.nativeEvent.isComposing) {
+                event.preventDefault();
+                submit();
+              }
+            }}
+          />
+        </Field>
+      )}
       {(needsAge || needsAgreement) && (
         <div className="flex flex-col gap-3">
           {needsAge && (
@@ -277,6 +332,11 @@ export function FindCommunity({
           Joining…
         </p>
       )}
+      {joinError && (
+        <p role="alert" className="text-body text-danger">
+          {joinError}
+        </p>
+      )}
       <div
         className="flex gap-3"
         data-onboarding-actions={onboarding ? "" : undefined}
@@ -291,14 +351,8 @@ export function FindCommunity({
         <Button
           variant="prominent"
           size={onboarding ? "lg" : "md"}
-          disabled={!consented || Boolean(joining)}
-          onClick={() =>
-            void join(
-              found,
-              given ? ACCOUNT_CONSENT : { adult, agreed },
-              "confirmed",
-            )
-          }
+          disabled={disabled}
+          onClick={submit}
         >
           Join
         </Button>

@@ -81,9 +81,9 @@ impl Pairing {
         let mut active = self
             .0
             .lock()
-            .map_err(|_| "Pairing is unavailable. Restart Buzz.")?;
+            .map_err(|_| concat!("Pairing is unavailable. Restart ", env!("BUZZ_DISPLAY_NAME"), "."))?;
         if self.1.load(Ordering::Relaxed) {
-            return Err("Buzz is signing out.".into());
+            return Err(concat!(env!("BUZZ_DISPLAY_NAME"), " is signing out.").into());
         }
         if let Some(old) = active.take() {
             old.cancel.cancel();
@@ -142,7 +142,7 @@ impl Pairing {
             let mut active = self
                 .0
                 .lock()
-                .map_err(|_| "Pairing is unavailable. Restart Buzz.")?;
+                .map_err(|_| concat!("Pairing is unavailable. Restart ", env!("BUZZ_DISPLAY_NAME"), "."))?;
             if active.as_ref().is_some_and(|a| a.id == id) {
                 stop(&mut active)
             } else {
@@ -170,7 +170,7 @@ pub fn pairing_status(pairing: tauri::State<'_, Pairing>, id: String) -> Result<
     let active = pairing
         .0
         .lock()
-        .map_err(|_| "Pairing is unavailable. Restart Buzz.")?;
+        .map_err(|_| concat!("Pairing is unavailable. Restart ", env!("BUZZ_DISPLAY_NAME"), "."))?;
     Ok(active
         .as_ref()
         .filter(|a| a.id == id)
@@ -188,7 +188,7 @@ fn decide(pairing: &Pairing, id: &str, decision: Decision) -> Result<(), String>
     let mut active = pairing
         .0
         .lock()
-        .map_err(|_| "Pairing is unavailable. Restart Buzz.")?;
+        .map_err(|_| concat!("Pairing is unavailable. Restart ", env!("BUZZ_DISPLAY_NAME"), "."))?;
     let active = active
         .as_mut()
         .filter(|a| a.id == id && matches!(a.status, Status::Code { .. }))
@@ -224,7 +224,7 @@ pub fn pairing_start(
         return Err("Unsupported pairing request.".into());
     }
     if viewer.len() != 64 || !viewer.bytes().all(|c| c.is_ascii_hexdigit()) {
-        return Err("Choose your Buzz account before pairing.".into());
+        return Err(concat!("Choose your ", env!("BUZZ_DISPLAY_NAME"), " account before pairing.").into());
     }
     let origin = relay::community(&community)?;
     let (tx, rx) = mpsc::channel(1);

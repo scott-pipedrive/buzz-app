@@ -1,3 +1,4 @@
+import { previousAppName } from "../../shared/app-name";
 import { useEffect, useRef, useState } from "react";
 import { AlertDialog } from "../../shared/design-system/ui/AlertDialog";
 import { Button } from "../../shared/design-system/ui/Button";
@@ -37,7 +38,7 @@ export function LegacyCommunityImport({
   };
   return (
     <AlertDialog
-      title="Import communities from old Buzz?"
+      title={`Import communities from ${previousAppName()}?`}
       description="Add these saved communities to your list and account. This may restore communities you previously removed."
       initialFocus={proceed}
       onClose={() => respond(false)}

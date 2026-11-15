@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { eventDto, type RelayEvent } from "./events";
 import {
   EMPTY_READ_STATE,
@@ -308,7 +309,7 @@ function openDatabase() {
     };
     request.onerror = () => reject(request.error);
     request.onblocked = () =>
-      reject(new Error("Close other Buzz windows to open read state"));
+      reject(new Error(`Close other ${appName()} windows to open read state`));
   });
 }
 /** Forgets one partition's journal after its session is disposed, so a left

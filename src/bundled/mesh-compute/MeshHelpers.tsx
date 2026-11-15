@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { useId, useRef, useState, useSyncExternalStore } from "react";
 import { randomAgentAvatar } from "../../features/agents/avatar-packs";
 import type { Agents } from "../../features/agents/service";
@@ -78,7 +79,7 @@ export function MeshHelpers({ agents }: { agents: Agents }) {
             <PreferenceRow
               key={preset?.id ?? "custom"}
               title={made ? `${name} — Created` : name}
-              subtitle={`${preset?.summary ?? "Start with the default assistant instructions."} ${mode === "chat" ? "Chat: no tools." : "Agent: the serving member’s model directs shell and files on this machine, plus Buzz access; workspace ~/.buzz. Tool output and core memory may be sent to that member."}`}
+              subtitle={`${preset?.summary ?? "Start with the default assistant instructions."} ${mode === "chat" ? "Chat: no tools." : `Agent: the serving member’s model directs shell and files on this machine, plus ${appName()} access; workspace ~/.buzz. Tool output and core memory may be sent to that member.`}`}
               trailing={
                 <Button
                   size="sm"

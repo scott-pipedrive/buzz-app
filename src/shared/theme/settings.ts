@@ -1,5 +1,6 @@
 import type { DeviceSetting } from "../device-settings";
-import { ACCENTS, type Accent, type Contrast } from "./accent";
+import { appName } from "../app-name";
+import { ACCENTS, SPHERES_ACCENTS, type Accent, type Contrast } from "./accent";
 import {
   MAX_FONT_SCALE,
   MIN_FONT_SCALE,
@@ -10,6 +11,7 @@ import {
 
 /** Appearance as device settings, through the one live `appearance`. */
 export function appearanceSettings(appearance: Appearance): DeviceSetting[] {
+  const spheres = appName() === "Spheres";
   const live = () => !appearance.isDisposed();
   const now = () => appearance.snapshot();
   return [
@@ -40,14 +42,16 @@ export function appearanceSettings(appearance: Appearance): DeviceSetting[] {
     {
       key: "appearance.accent",
       description: "Accent color for messages, send and selected rows.",
-      schema: { type: "string", enum: ACCENTS },
+      schema: { type: "string", enum: spheres ? SPHERES_ACCENTS : ACCENTS },
       read: () => ({ value: now().accent, unsaved: now().accentError }),
       write: (value) => appearance.setAccent(value as Accent),
       live,
     },
     {
       key: "appearance.vibe",
-      description: "Vibe level: low is Chillin’, high is Buzzin’.",
+      description: spheres
+        ? "Message color. Low is Soft and high is Bold."
+        : "Vibe level: low is Chillin’, high is Buzzin’.",
       schema: { type: "string", enum: ["low", "high"] },
       read: () => ({ value: now().contrast, unsaved: now().contrastError }),
       write: (value) => appearance.setContrast(value as Contrast),

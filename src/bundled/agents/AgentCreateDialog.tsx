@@ -1,7 +1,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import type { AgentCardDraft } from "../../features/agents/agent-card";
 import {
-  agentAvatars,
+  findPackAvatar,
   randomAgentAvatar,
 } from "../../features/agents/avatar-packs";
 import type {
@@ -108,7 +108,7 @@ export function AgentCreateDialog({
     if (picture === undefined)
       return { kind: "gloopie", picture: randomAgentAvatar().url };
     // A card or request can name a pack avatar, which then animates.
-    return agentAvatars.some((avatar) => avatar.url === picture)
+    return findPackAvatar(picture)
       ? { kind: "gloopie", picture }
       : { kind: "image", picture };
   });

@@ -393,6 +393,31 @@ it("saves the accent, recovers from denied storage, synchronizes reset, and disp
   expect(b.root.dataset.accent).toBe("citrus");
 });
 
+it.each([
+  [null, "spheres-ink"],
+  ["spheres-ink", "spheres-ink"],
+  ["cobalt", "cobalt"],
+  ["magenta", "magenta"],
+] as const)(
+  "keeps the Spheres accent consistent from first paint with saved value %j",
+  (saved, expected) => {
+    const b = browser("dark");
+    b.root.dataset.spheres = "";
+    if (saved) b.values.set(ACCENT_KEY, saved);
+    runInNewContext(readFileSync("public/appearance-init.js", "utf8"), {
+      localStorage: b.storage,
+      document: b.host.document,
+      matchMedia: b.host.matchMedia,
+    });
+    expect(b.root.dataset.accent).toBe(expected);
+    const app = createAppearance(b.host);
+    expect(app.snapshot()).toMatchObject({ accent: expected, mode: "dark" });
+    app.setAccent("spheres-ink");
+    expect(b.values.get(ACCENT_KEY)).toBe("spheres-ink");
+    app.dispose();
+  },
+);
+
 it.each(["neutral", "touch", "more", "full"])(
   "ignores retired vibe preference %s before and after startup",
   (level) => {

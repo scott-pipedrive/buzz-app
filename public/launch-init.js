@@ -27,6 +27,7 @@ if (launch && mark) {
   // A slow start offers Reload; the launch still leaves by itself if it ends.
   const SLOW_MS = 20_000;
   const native = window.__TAURI_INTERNALS__;
+  const appName = document.documentElement.hasAttribute("data-spheres") ? "Spheres" : "Buzz";
   let started = false;
   let failure;
   let slow;
@@ -99,7 +100,7 @@ if (launch && mark) {
     const title = element(
       "h1",
       "",
-      running ? "Buzz stopped working" : "Buzz couldn’t open",
+      running ? `${appName} stopped working` : `${appName} couldn’t open`,
     );
     title.id = "buzz-startup-failure-title";
     message.append(
@@ -117,7 +118,7 @@ if (launch && mark) {
     actions.append(first);
     if (native)
       actions.append(
-        button("Restart Buzz", () => {
+        button(`Restart ${appName}`, () => {
           void native.invoke("update_restart").catch(reload);
         }),
       );

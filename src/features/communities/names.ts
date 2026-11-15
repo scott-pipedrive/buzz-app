@@ -1,4 +1,4 @@
-import { communityDestination } from "./destination";
+import { communityDestination, enteredRelayOrigin } from "./destination";
 import type { Membership } from "./service";
 
 export const COMMUNITY_NAME_MAX_LENGTH = 100;
@@ -21,7 +21,11 @@ export function publishedCommunityName(value: unknown) {
 
 export const communityDefaultName = (
   community: Pick<Membership, "name" | "publishedName">,
-) => community.publishedName || community.name;
+) =>
+  community.publishedName ||
+  (community.name === "buzz.askbellboy.com"
+    ? new URL(enteredRelayOrigin(community.name)).host
+    : community.name);
 export const communityName = (
   community: Pick<Membership, "name" | "publishedName" | "localName">,
 ) => community.localName || communityDefaultName(community);

@@ -12,6 +12,8 @@
     "dev:desktop": "vite --strictPort --force",
     "build": "pnpm typecheck && vite build",
     "build:bellboy": "VITE_BUZZ_DEFAULT_COMMUNITY=https://buzz.askbellboy.com pnpm tauri build --debug --bundles app --config src-tauri/tauri.bellboy-preview.conf.json",
+    "build:spheres": "BUZZ_BUILD_FEDERATED_IDENTITY_CONFIG= BUZZ_BUILDERLAB_URL= BUZZ_BUILD_SPHERES_PLUGIN_DEFAULTS=1 BUZZ_DEFAULT_COMMUNITY_URL=https://hellospheres.com BUZZ_BUILD_JOIN_ONBOARDING=1 pnpm tauri build --debug --bundles app --config src-tauri/tauri.spheres.conf.json",
+    "install:spheres": "bash scripts/install-spheres-mac.sh",
     "preview": "vite preview",
     "author:build": "node scripts/build-author.mjs",
     "buzz-mcp": "vite build --config vite.buzz-mcp.config.ts",

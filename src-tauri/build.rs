@@ -16,6 +16,13 @@ mod nsec_backup_config;
 
 #[cfg_attr(test, allow(dead_code))]
 fn main() {
+    // Use the same product name as the Spheres bundle, including before an
+    // AppHandle exists for startup errors.
+    let spheres = std::env::var("TAURI_CONFIG")
+        .ok()
+        .and_then(|value| serde_json::from_str::<serde_json::Value>(&value).ok())
+        .is_some_and(|config| config["productName"] == "Spheres");
+    println!("cargo:rustc-env=BUZZ_DISPLAY_NAME={}", if spheres { "Spheres" } else { "Buzz" });
     configure_nsec_backup();
     configure_federated_identity();
     configure_enterprise_auth();

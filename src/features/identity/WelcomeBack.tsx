@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { decode } from "nostr-tools/nip19";
 import { Button } from "../../shared/design-system/ui/Button";
 import { Avatar } from "../../shared/design-system/ui/Avatar";
@@ -41,7 +42,7 @@ export function WelcomeBack({
         <p className="mt-2 text-body text-subtle">
           {onDevice
             ? name
-              ? "Continue with your Buzz profile."
+              ? `Continue with your ${appName()} profile.`
               : "We found the key to your account."
             : onRestore
               ? "Your account’s key isn’t on this device. Try restoring it from a backup, or enter its private key."

@@ -1,3 +1,4 @@
+import { appName } from "../shared/app-name";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { Button } from "../shared/design-system/ui/Button";
 import { Dialog } from "../shared/design-system/ui/Dialog";
@@ -113,7 +114,7 @@ export function ManagedPlugins({
           }
         />
         <p role="status" className="m-0 text-body-sm text-muted break-words">
-          Buzz couldn’t load the recommended plugin list from {managed.url}.{" "}
+          {`${appName()} couldn’t load the recommended plugin list from `}{managed.url}.{" "}
           {managed.reason}
         </p>
       </section>
@@ -127,7 +128,7 @@ export function ManagedPlugins({
           title="Recommended plugins unavailable"
         />
         <p role="status" className="m-0 text-body-sm text-muted break-words">
-          Buzz couldn’t use the managed plugin file {managed.path}.{" "}
+          {`${appName()} couldn’t use the managed plugin file `}{managed.path}.{" "}
           {managed.reason}
         </p>
       </section>
@@ -642,8 +643,7 @@ export function ManagedPluginReview({
           </p>
           {existing?.source === "bundled" ? (
             <p className="m-0">
-              This plugin is included with Buzz. Update Buzz to get its latest
-              version.
+              {`This plugin is included with ${appName()}. Update ${appName()} to get its latest version.`}
             </p>
           ) : (
             <>

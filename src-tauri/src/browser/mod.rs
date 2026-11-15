@@ -258,11 +258,11 @@ fn storage_identifier(name: &str) -> Result<[u8; 16], String> {
 }
 
 const APPROVE_IN_BROWSER: &str =
-    "Approve this app in your web browser. It reloads when you come back to Buzz";
+    concat!("Approve this app in your web browser. It reloads when you come back to ", env!("BUZZ_DISPLAY_NAME"));
 const APPROVE_AFTER_RELOAD: &str =
     "This app needs approval. Select Reload to approve it in your web browser";
 const CONTINUE_IN_BROWSER: &str =
-    "Finish in your web browser. This app reloads when you come back to Buzz";
+    concat!("Finish in your web browser. This app reloads when you come back to ", env!("BUZZ_DISPLAY_NAME"));
 const HELD_IN_BROWSER: &str = "This app wants to open a Builderlab page in your web browser";
 
 /// Builderlab portal pages handed to the system browser.
@@ -431,7 +431,7 @@ fn build_contents(
     let storage = storage.map(storage_identifier).transpose()?;
     let host = app
         .get_webview_window("main")
-        .ok_or("Buzz main webview is unavailable")?
+        .ok_or(concat!(env!("BUZZ_DISPLAY_NAME"), " main webview is unavailable"))?
         .as_ref()
         .clone();
     let snapshot = Rc::new(RefCell::new(BrowserSnapshot::default()));
@@ -490,7 +490,7 @@ fn build_contents(
         })
         .with_download_started_handler(move |_, _| {
             download_snapshot.borrow_mut().error =
-                Some("Downloads are not supported in Buzz Browser".into());
+                Some(concat!("Downloads are not supported in ", env!("BUZZ_DISPLAY_NAME"), " Browser").into());
             false
         })
         .with_new_window_req_handler(|_, _| wry::NewWindowResponse::Deny);

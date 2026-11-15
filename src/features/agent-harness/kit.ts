@@ -4,6 +4,7 @@
 // handler, and its replies. The harness owns its process, its sessions and
 // what it saves; the kit grants nothing a plugin's `agents` and `host` do not
 // already give it.
+import { appName } from "../../shared/app-name";
 import { appClient } from "../../buzz-mcp/app-client";
 import type { Context } from "../../buzz-mcp/client";
 import { RESUMED_PROMPT } from "../../buzz-mcp/prompt";
@@ -181,7 +182,7 @@ function advance(cursor: Cursor, newest: number, contextRoot?: string) {
 }
 
 const NO_TOOLS = `<buzz-tools-unavailable>
-This session has no Buzz tools: the tools named above, such as send and read, do not exist here. Your final message is posted as your reply in the conversation, so write it as that reply, and say there what you need from anyone.
+This session has no ${appName()} tools: the tools named above, such as send and read, do not exist here. Your final message is posted as your reply in the conversation, so write it as that reply, and say there what you need from anyone.
 </buzz-tools-unavailable>`;
 const CONVERSATION_READ_TIMEOUT_MS = 4_000;
 
@@ -439,7 +440,7 @@ export function harnessKit(sources: Sources): HarnessKit {
           memories: (slug) => {
             const found = reads();
             if (!found)
-              return Promise.reject(new Error("Buzz is not connected"));
+              return Promise.reject(new Error(`${appName()} is not connected`));
             return memoryReads.read(
               found,
               pubkey,

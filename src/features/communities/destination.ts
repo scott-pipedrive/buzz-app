@@ -28,7 +28,7 @@ export function relayOrigin(input: string): string {
  */
 export function enteredRelayOrigin(input: string): string {
   const value = input.trim();
-  return relayOrigin(value.includes("://") ? value : `wss://${value}`);
+  return communityDestination(value.includes("://") ? value : `wss://${value}`).url;
 }
 
 /** A short deployment ID is not a URL and must never acquire a session by itself. */
@@ -76,7 +76,14 @@ export function communityDestination(
   aliases = configuredAliases,
 ) {
   const legacy = Object.hasOwn(aliases, value) ? aliases[value] : undefined;
-  const url = legacy ?? relayOrigin(value);
+  const origin = legacy ?? relayOrigin(value);
+  // Existing Spheres installations saved this workspace by its original URL.
+  const packagedOrigin = import.meta.env?.VITE_BUZZ_PACKAGED_COMMUNITY;
+  const url =
+    packagedOrigin === "https://hellospheres.com" &&
+    origin === "https://buzz.askbellboy.com"
+      ? packagedOrigin
+      : origin;
   const id = Object.keys(aliases).find((key) => aliases[key] === url) ?? url;
   return { id, url, name: new URL(url).host };
 }

@@ -1,4 +1,5 @@
 import { agentAvatars } from "../../src/features/agents/avatar-packs";
+import { spheresAvatars } from "../../src/features/agents/spheres-avatar-pack";
 import { createRoot } from "react-dom/client";
 import { AgentShareDialog } from "../../src/bundled/agents/AgentShareDialog";
 import type {
@@ -12,6 +13,7 @@ import "../../src/shared/styles/globals.css";
 // The real Share dialog for an agent with no picture, over a session that
 // reaches nobody: enough to open Export and draw the card on a real canvas.
 const params = new URLSearchParams(location.search);
+if (params.has("spheres")) document.documentElement.dataset.spheres = "";
 document.documentElement.classList.toggle(
   "dark",
   params.get("theme") === "dark",
@@ -34,7 +36,10 @@ if (params.has("portrait")) {
   context.fill();
   picture = canvas.toDataURL();
 }
-if (params.has("pack")) picture = agentAvatars[0].url;
+if (params.has("pack"))
+  picture = params.has("spheres")
+    ? spheresAvatars.find((avatar) => avatar.id === "spheres-yellow")?.url
+    : agentAvatars[0].url;
 const agent = {
   key: "a".repeat(64),
   pubkey: "a".repeat(64),

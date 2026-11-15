@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { Field } from "../../shared/design-system/ui/Field";
 import { Input } from "../../shared/design-system/ui/Input";
 import { useState } from "react";
@@ -115,7 +116,7 @@ function LinkLab() {
         </section>
         <section>
           <span className={styles.label}>
-            Buzz channels, messages and threads
+            {`${appName()} channels, messages and threads`}
           </span>
           <p>
             Head back to {preview(general, "#general")} or pick up{" "}
@@ -142,7 +143,7 @@ function LinkLab() {
             label="Try a URL"
             error={
               !linkKind(url)
-                ? "Enter an HTTP, HTTPS, or supported Buzz link."
+                ? `Enter an HTTP, HTTPS, or supported ${appName()} link.`
                 : undefined
             }
           >

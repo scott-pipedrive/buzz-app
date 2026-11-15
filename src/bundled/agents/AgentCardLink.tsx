@@ -1,5 +1,6 @@
 // A Builderlab agent card's share link in a message: the card's picture and
 // name in place of the web link, and a hover card that offers Add to Buzz.
+import { appName } from "../../shared/app-name";
 import {
   useCallback,
   useContext,
@@ -192,7 +193,7 @@ function AgentCardLinkPreview({ card, onAdd }: { card: Card; onAdd(): void }) {
         <span className={styles.kind}>Agent card</span>
       </span>
       <Button variant="primary" size="sm" onClick={onAdd}>
-        Add to Buzz
+        {`Add to ${appName()}`}
       </Button>
     </div>
   );

@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { invoke } from "@tauri-apps/api/core";
 import { listedAddress } from "../../bundled/builderlab/known-communities/client";
 import { oauthTarget } from "../../bundled/builderlab/oauth/browser";
@@ -221,7 +222,7 @@ const ACCOUNT_ERRORS: Readonly<
   Record<string, Readonly<{ message?: string; retryable?: true }>>
 > = {
   invalid_origin: {
-    message: "Builderlab didn’t accept this request from Buzz.",
+    message: `Builderlab didn’t accept this request from ${appName()}.`,
   },
   invalid_challenge: {
     message:

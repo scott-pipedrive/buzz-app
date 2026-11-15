@@ -4,6 +4,7 @@
 // handler, so everything here is a no-op outside Tauri.
 import { Channel, invoke, isTauri } from "@tauri-apps/api/core";
 import { parseInviteLink, type InviteLink } from "../communities/invite-link";
+import { firstRunInvite } from "../communities/invite-intent";
 import { communityDestination } from "../communities/destination";
 import type { ClientSnapshot } from "../communities/service";
 import { agentCardTarget, parseBuzzLink, settingsTarget } from "./buzz-links";
@@ -159,6 +160,12 @@ export function bindDeepLinks(
   // Whether the client has been ready since binding: the app is running.
   let running = isReady(client);
   let clientEpoch = 0;
+  let clearInvitePreview: (() => void) | undefined;
+  const clearHeld = () => {
+    held = undefined;
+    clearInvitePreview?.();
+    clearInvitePreview = undefined;
+  };
   // A malformed link in a running app explains itself over the page the user
   // is on. One that launched the app opens Inbox, or, with Inbox turned off,
   // explains itself over the start page. Until the client and Inbox both settle
@@ -174,7 +181,7 @@ export function bindDeepLinks(
     const inbox = launch && scope ? host.inbox.status() : "off";
     if ((launch && !scope) || inbox === "loading")
       return Promise.resolve({ status: "failed", reason: "invalid-target" });
-    held = undefined;
+    clearHeld();
     host.rejected();
     if (scope && inbox === "on")
       return host.navigation.open({
@@ -204,7 +211,7 @@ export function bindDeepLinks(
           incoming.selected &&
           incoming.selected !== client.selected))
     ) {
-      held = undefined;
+      clearHeld();
       host.fail("denied");
       return Promise.resolve({ status: "failed", reason: "denied" });
     }
@@ -214,7 +221,7 @@ export function bindDeepLinks(
     if (incoming.authorization) {
       if (!client.viewer || client.status !== "ready")
         return Promise.resolve({ status: "failed", reason: "unavailable" });
-      held = undefined;
+      clearHeld();
       host.authorize?.(incoming.authorization, client.viewer);
       return Promise.resolve({ status: "cancelled" });
     }
@@ -223,13 +230,13 @@ export function bindDeepLinks(
       return Promise.resolve({ status: "failed", reason: "unavailable" });
     }
     if (invite && client.viewer && host.invite) {
-      held = undefined;
+      clearHeld();
       host.invite(invite, client.viewer);
       return Promise.resolve({ status: "cancelled" });
     }
     const step = deepLinkStep(incoming.url, client);
     if ("open" in step) {
-      held = undefined;
+      clearHeld();
       return host.navigation.open(step.open);
     }
     if (step.fail === "invalid-target") return reject(client, incoming.launch);
@@ -253,7 +260,7 @@ export function bindDeepLinks(
           held.selected &&
           held.selected !== client.selected))
     ) {
-      held = undefined;
+      clearHeld();
       host.fail("denied");
     } else if (client.status !== "loading" && !held.reported && !draining) {
       void openHeld();
@@ -309,6 +316,7 @@ export function bindDeepLinks(
         const client = communities.snapshot();
         const invite = parseInviteLink(url);
         const authorization = parseExternalAuthorization(url);
+        clearHeld();
         held = {
           url,
           invite,
@@ -320,6 +328,12 @@ export function bindDeepLinks(
           selected: client.selected,
           reported: false,
         };
+        if (invite && !client.viewer) {
+          const incoming = held;
+          clearInvitePreview = firstRunInvite.show(invite, () => {
+            if (held === incoming) clearHeld();
+          });
+        }
         if (!held.invalid) host.accepted();
         if (client.status !== "loading") void openHeld();
         else flush();
@@ -348,7 +362,7 @@ export function bindDeepLinks(
     const next = host.navigation.snapshot();
     // fail() emits synchronously; its ingress marker distinguishes our failure
     // from a newer user visit, including Back/Forward and Go Home.
-    if (next.attempt.id !== attempt.id && !next.ingress) held = undefined;
+    if (next.attempt.id !== attempt.id && !next.ingress) clearHeld();
     attempt = next.attempt;
   });
   // A broken shell bridge must never keep the app from opening.
@@ -366,7 +380,7 @@ export function bindDeepLinks(
     stopInbox();
     stopNavigation();
     stopShell();
-    held = undefined;
+    clearHeld();
   };
 }
 

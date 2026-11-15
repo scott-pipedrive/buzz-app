@@ -1,12 +1,33 @@
 import Markdown, { type Components } from "react-markdown";
+import type { Nodes, Root } from "mdast";
 import remarkGfm from "remark-gfm";
 import { motion, useReducedMotion } from "motion/react";
 import { useId, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "../shared/design-system/ui/Button";
 import { safeLinkUrl } from "../features/relay/message-content";
+import { appName, legacyAppName, previousAppName } from "../shared/app-name";
 import styles from "./PluginReadme.module.css";
 
-const REMARK = [remarkGfm];
+/** Brand the bundled explanation without rewriting links, code or commands. */
+function remarkProductName() {
+  return (root: Root) => {
+    if (appName() !== "Spheres") return;
+    const walk = (node: Nodes) => {
+      if (node.type === "text") {
+        node.value = node.value
+          .replace(/\bBuzz \(Legacy\)/g, legacyAppName())
+          .replace(/\bold Buzz\b/g, previousAppName())
+          .replace(/\bOld Buzz\b/g, previousAppName(true))
+          .replace(/\bBuzz\b/g, appName());
+      } else if ("children" in node) {
+        for (const child of node.children) walk(child);
+      }
+    };
+    walk(root);
+  };
+}
+
+const REMARK = [remarkGfm, remarkProductName];
 // The pane already titles the plugin (h2); README sections nest beneath it.
 const MARKDOWN: Components = {
   h1: ({ children }) => <h3>{children}</h3>,

@@ -7,7 +7,7 @@ import {
 } from "react";
 import { Avatar } from "../../shared/design-system/ui/Avatar";
 import { RobotIcon } from "../../shared/design-system/icons";
-import { agentAvatars } from "../../features/agents/avatar-packs";
+import { findPackAvatar } from "../../features/agents/avatar-packs";
 import { PackedAgentAvatar } from "../../features/agents/PackedAgentAvatar";
 import "./sonar.css";
 
@@ -113,11 +113,7 @@ export function AttentionSonar({
   const rise = Math.min((0.16 / settings.period) * 100, windowPercent / 4);
   const hold =
     windowPercent - Math.min((0.12 / settings.period) * 100, windowPercent / 4);
-  const avatar = picture
-    ? agentAvatars.find(
-        (item) => item.url === picture || item.preview === picture,
-      )
-    : undefined;
+  const avatar = findPackAvatar(picture);
   return (
     <div
       className="attention-sonar"

@@ -1965,6 +1965,9 @@ function AgentsMessageRow(props: MessageRowProps & { failure?: boolean }) {
             id: author.pubkey,
             name: author.name,
             picture: author.picture,
+            expression: failure
+              ? "attention"
+              : (activity?.expression ?? (active ? "working" : undefined)),
           },
         ]}
         stackPrevious={!failure && activity?.container !== "standalone"}

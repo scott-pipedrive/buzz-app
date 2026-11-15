@@ -46,7 +46,7 @@ import {
   type SidebarPreferences,
 } from "./sidebar-preferences";
 import { createHostAdmission } from "./host-admission";
-import { relayOrigin } from "../communities/destination";
+import { communityDestination, relayOrigin } from "../communities/destination";
 import {
   admittedApiRequest,
   ApiPaused,
@@ -244,6 +244,13 @@ export function mediaUrl(
   size?: "small",
 ): string | undefined {
   if (url.startsWith("data:")) return avatarSource(url);
+  const formerSpheresOrigin = "https://buzz.askbellboy.com";
+  if (
+    url.startsWith(`${formerSpheresOrigin}/media/`) &&
+    relayOrigin === communityDestination(formerSpheresOrigin).url
+  ) {
+    url = relayOrigin + url.slice(formerSpheresOrigin.length);
+  }
   if (url.startsWith(`${relayOrigin}/media/`)) {
     // Desktop appends `#buzz-anim=<url>` to animated avatars. A fragment never
     // reaches the relay, and both media proxies reject it, so load the still.

@@ -58,7 +58,12 @@ mod power {
             );
             let reason = CFStringCreateWithCString(
                 std::ptr::null(),
-                c"Buzz keeps this Mac awake for its agents".as_ptr(),
+                if crate::DISPLAY_NAME == "Spheres" {
+                    c"Spheres keeps this Mac awake for its agents"
+                } else {
+                    c"Buzz keeps this Mac awake for its agents"
+                }
+                .as_ptr(),
                 UTF8,
             );
             let mut id = 0;

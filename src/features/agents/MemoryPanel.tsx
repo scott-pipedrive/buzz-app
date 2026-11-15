@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { Accordion } from "../../shared/design-system/ui/Accordion";
 import { SettingsGroup } from "../../shared/design-system/ui/SettingsGroup";
 import { Header } from "../../shared/design-system/ui/Header";
@@ -62,7 +63,7 @@ type View = ReturnType<AgentMemories["open"]>;
 const MESSAGES: Record<MemorySnapshot["status"], string> = {
   idle: "Memory isn't loaded.",
   loading: "Loading memory…",
-  blocked: "Memory can be read once Buzz is connected.",
+  blocked: `Memory can be read once ${appName()} is connected.`,
   error: "Memory couldn't be read.",
   denied: "This community doesn't let you read this agent's memory.",
   unavailable: "Memory isn't available here.",

@@ -1,3 +1,4 @@
+import { appName } from "../shared/app-name";
 import {
   useId,
   useLayoutEffect,
@@ -74,7 +75,7 @@ export function IdentityBadge({
   const tilt = useIdentityTilt();
   const { x: pointerX, y: pointerY, reducedMotion } = tilt;
   return (
-    <Panel aria-label="Your Buzz ID">
+    <Panel aria-label={`Your ${appName()} ID`}>
       <div className={styles.badge}>
         <div className={styles.actions}>
           <Tooltip content={back ? "Back" : "More options"}>
@@ -151,7 +152,7 @@ export function IdentityBadge({
                         aria-label={
                           photoContext
                             ? `Photo from ${photoContext}`
-                            : "Buzz identity photo"
+                            : `${appName()} identity photo`
                         }
                       >
                         <Avatar
@@ -163,7 +164,7 @@ export function IdentityBadge({
                       </span>
                     </Tooltip>
                     <strong className="dark text-heading font-bold text-standard break-normal">
-                      Buzz ID
+                      {`${appName()} ID`}
                     </strong>
                   </div>
                   {backup && (
@@ -242,11 +243,11 @@ export function IdentityBadge({
                     </code>
                     <span className={styles.copyAction}>
                       <Tooltip
-                        content="Copy your full public Buzz ID"
+                        content={`Copy your full public ${appName()} ID`}
                         hint="familiar"
                       >
                         <IconButton
-                          aria-label="Copy Buzz ID"
+                          aria-label={`Copy ${appName()} ID`}
                           size="xs"
                           icon={<CopyIcon aria-hidden="true" />}
                           onClick={onCopy}

@@ -6,7 +6,7 @@ import {
 } from "../../app/shell/WindowControls";
 import { macTitleBarDragHandlers } from "../../app/shell/title-bar";
 import { Panel } from "../../shared/design-system/ui/Panel";
-import { OnboardingBees } from "./OnboardingBees";
+import { SpheresField } from "./SpheresArtwork";
 import { useWelcomeIntro } from "./useWelcomeIntro";
 import styles from "./IdentitySetup.module.css";
 
@@ -40,7 +40,7 @@ export function OnboardingScreen({
       aria-labelledby={labelledBy}
       data-color-mode={welcome ? "light" : undefined}
     >
-      {welcome && <OnboardingBees entering={introPhase !== "done"} />}
+      {welcome && <SpheresField waiting={introPhase === "waiting"} />}
       <header
         className={styles.titlebar}
         data-buzz-window-drag=""
@@ -50,8 +50,8 @@ export function OnboardingScreen({
         {!welcome && (
           <img
             className={styles.cornerMark}
-            src="/welcome-bee.svg"
-            alt="Buzz"
+            src="/spheres-mark.svg"
+            alt="Spheres"
             draggable={false}
           />
         )}

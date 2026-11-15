@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { useState } from "react";
 import type { Agents } from "../../features/agents/service";
 import { useAgentChoices } from "../../features/agents/use-choices";
@@ -141,7 +142,7 @@ export function BestieChooser({
         description={
           description ??
           (firstAgent
-            ? "Buzz is better with your agents. Create one to get started."
+            ? `${appName()} is better with your agents. Create one to get started.`
             : "Choose the agent you want close at hand. Your Bestie gets a pinned DM and is selected for new Solo chats.")
         }
         action={

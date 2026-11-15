@@ -174,7 +174,7 @@ pub(crate) fn init() {
 pub(super) fn show(id: String, title: String, body: String, pending: Arc<Pending>) {
     if !crate::dock::bundled() {
         pending.finish(Outcome::Failed(
-            "macOS notifications are unavailable when Buzz is not running from an app bundle"
+            concat!("macOS notifications are unavailable when ", env!("BUZZ_DISPLAY_NAME"), " is not running from an app bundle")
                 .into(),
         ));
         return;
@@ -234,7 +234,7 @@ pub(super) fn show(id: String, title: String, body: String, pending: Arc<Pending
     });
 }
 
-const NOTIFICATIONS_NOT_ALLOWED: &str = "macOS did not allow this app to send notifications. Enable Buzz in System Settings → Notifications. Development builds also need a stable Code Signing certificate configured as BUZZ_DEV_SIGNING_IDENTITY.";
+const NOTIFICATIONS_NOT_ALLOWED: &str = concat!("macOS did not allow this app to send notifications. Enable ", env!("BUZZ_DISPLAY_NAME"), " in System Settings → Notifications. Development builds also need a stable Code Signing certificate configured as BUZZ_DEV_SIGNING_IDENTITY.");
 
 fn permission_error(permission: Permission) -> String {
     match permission {

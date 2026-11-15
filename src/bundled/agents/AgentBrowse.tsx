@@ -53,7 +53,7 @@ import { SettingsGroup } from "../../shared/design-system/ui/SettingsGroup";
 import { InlineHeader } from "../../shared/design-system/ui/Header";
 import { AgentInstructions } from "../../features/agents/AgentInstructions";
 import { ProfileBackdrop } from "../../features/profiles/ProfileBackdrop";
-import { agentAvatars } from "../../features/agents/avatar-packs";
+import { findPackAvatar } from "../../features/agents/avatar-packs";
 import hero from "../../features/profiles/ProfileHero.module.css";
 import pageStyles from "./AgentsPage.module.css";
 import cardStyles from "./AgentCard.module.css";
@@ -231,7 +231,7 @@ export function SharedAgentPanel({
   ...importing
 }: Importing & { selection: SharedAgentSelection }) {
   const { agent, session, community } = selection;
-  const pack = agentAvatars.find((item) => item.url === agent.picture);
+  const pack = findPackAvatar(agent.picture);
   const picture = useAvatarPreview(
     pack ? "" : (agent.picture ?? ""),
     community,

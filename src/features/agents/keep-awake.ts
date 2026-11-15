@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { useSyncExternalStore } from "react";
 
 /** Off; Always ("on") while the app runs; or While agents work ("auto"): while
@@ -62,7 +63,7 @@ export function setKeepAwakePreference(value: KeepAwake): string | null {
     localStorage.setItem(preferenceKey, JSON.stringify(value));
     unsaved = undefined;
   } catch {
-    error = "It works for now, but Buzz will forget it when it restarts.";
+    error = `It works for now, but ${appName()} will forget it when it restarts.`;
   }
   window.dispatchEvent(new Event(changedEvent));
   return error;

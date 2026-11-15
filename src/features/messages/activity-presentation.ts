@@ -1,7 +1,15 @@
 import { useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { ChannelMessage } from "../relay/contracts";
 import type { RelaySession } from "../relay/session";
-import { requestWork, isSettledWork } from "../agents/request-work";
+import {
+  requestWork,
+  isSettledWork,
+  type RequestWork,
+} from "../agents/request-work";
+import { activityTranscript } from "../agents/activity-transcript";
+import { toolAwaitsPermission } from "../agents/current-activity";
+import type { SpheresAvatarExpression } from "../agents/spheres-avatar-pack";
+import { appName } from "../../shared/app-name";
 import { continuesMessageGroup } from "./message-grouping";
 import { activityRuns } from "./activity-groups";
 
@@ -31,6 +39,7 @@ export type ActivityPresentation = ActivityRun & {
   working: boolean;
   /** Latest recorded update belonging to a participant still working here. */
   workingUpdate: ChannelMessage | undefined;
+  expressions: ReadonlyMap<string, SpheresAvatarExpression>;
   standalone: boolean;
 };
 export type ActivityRowPresentation = {
@@ -42,6 +51,7 @@ export type ActivityRowPresentation = {
   /** Keep a failure's author visible in history shared with other agents. */
   showAuthor?: boolean;
   container: "history" | "bubble" | "standalone";
+  expression?: SpheresAvatarExpression | undefined;
 };
 const noSubscribe = () => () => {};
 
@@ -112,6 +122,25 @@ function publishedRequests(
 }
 
 /** Status belongs to the triggering request, never to all work in its thread. */
+function activityExpression(
+  work: RequestWork,
+  channelId: string,
+): SpheresAvatarExpression | undefined {
+  if (work.working) {
+    const transcript = activityTranscript(work.selected.records, {
+      agent: work.agent,
+      channelId,
+    });
+    const waiting = transcript.turns.some(
+      (turn) => !turn.endedAt && turn.items.some(toolAwaitsPermission),
+    );
+    return waiting ? "waiting" : "working";
+  }
+  if (work.state === "waiting") return "listening";
+  if (work.state === "done" || work.state === "ended") return "done";
+  if (work.state === "error" && !work.dismissed) return "attention";
+}
+
 function activityStatus(
   group: ActivityRun,
   snapshot: Snapshot | undefined,
@@ -190,7 +219,17 @@ function activityStatus(
         state: "error",
         reason: row.content,
       });
-  return { retired, working, outcomes };
+  const expressions = new Map<string, SpheresAvatarExpression>();
+  if (appName() === "Spheres") {
+    for (const entry of known.values()) {
+      const expression = activityExpression(entry, latest.channelId);
+      if (expression) expressions.set(entry.agent, expression);
+    }
+    for (const entry of outcomes)
+      if (entry.state === "error" && !expressions.has(entry.agent))
+        expressions.set(entry.agent, "attention");
+  }
+  return { retired, working, outcomes, expressions };
 }
 
 /** Shared projection for timeline and thread; hosts own scrolling and disclosure state. */
@@ -335,7 +374,7 @@ export function activityPresentation(
       requestId: requests.get(first.id) ?? first.threadRootId,
       followingMessage: following.get(latest.id),
     };
-    const { retired, working, outcomes } = activityStatus(
+    const { retired, working, outcomes, expressions } = activityStatus(
       group,
       snapshot,
       agents,
@@ -366,6 +405,10 @@ export function activityPresentation(
           !retired &&
           (working.has(row.authorId) || !group.followingMessage),
         followed: !!group.followingMessage,
+        expression:
+          last && liveParticipants.includes(row.authorId)
+            ? expressions.get(row.authorId)
+            : undefined,
         container: row.id === first.id && standalone ? "standalone" : "bubble",
         showAuthor:
           participants.length > 1 && row.notice === "execution-failure",
@@ -375,6 +418,7 @@ export function activityPresentation(
       ...group,
       retired,
       liveParticipants,
+      expressions,
       outcomes: outcomes.filter((entry) =>
         liveParticipants.includes(entry.agent),
       ),
@@ -447,6 +491,7 @@ export function useStableRowActivity() {
           prior.ownsLive === next.ownsLive &&
           prior.followed === next.followed &&
           prior.showAuthor === next.showAuthor &&
+          prior.expression === next.expression &&
           prior.container === container
         )
           return prior;

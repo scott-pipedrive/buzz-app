@@ -1,3 +1,4 @@
+import { appName } from "../../../shared/app-name";
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { ManagementFacts } from "../ManagementSection";
 import { Header } from "../../../shared/design-system/ui/Header";
@@ -9,7 +10,7 @@ import { nativeBuilderlab, type BuilderlabSession } from "../session";
 const kept = () =>
   brokerBuilderlab()
     ? "Your sign-in stays on the development server through app reloads, until you sign out or the session expires."
-    : "Buzz keeps your sign-in in your system keychain until you sign out.";
+    : `${appName()} keeps your sign-in in your system keychain until you sign out.`;
 
 export function Login({
   session,
@@ -17,7 +18,7 @@ export function Login({
   active,
   showHeading = true,
   cancelOnUnmount = true,
-  unavailableReason = "Open the Buzz desktop app to sign in with Builderlab.",
+  unavailableReason = `Open the ${appName()} desktop app to sign in with Builderlab.`,
   openIdentity,
   notice = false,
 }: {
@@ -137,7 +138,7 @@ export function Login({
         </div>
         {available && state.status === "pending" && !state.checking && (
           <p role="status" className="m-0 text-body-sm text-secondary">
-            Finish sign-in in your browser, then return to Buzz.
+            {`Finish sign-in in your browser, then return to ${appName()}.`}
           </p>
         )}
         {available && state.error && (
@@ -174,7 +175,7 @@ export function Login({
               {state.checking
                 ? "Checking your Builderlab sign-in…"
                 : state.status === "pending"
-                  ? "Finish sign-in in your browser, then return to Buzz."
+                  ? `Finish sign-in in your browser, then return to ${appName()}.`
                   : state.account
                     ? state.account.email
                       ? `Signed in as ${state.account.email}.`

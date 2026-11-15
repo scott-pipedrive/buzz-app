@@ -44,9 +44,7 @@
   height: 4.5rem;
 }
 
-:root[data-color-mode="dark"] .buzz-launch img {
-  filter: invert(1);
-}
+/* Spheres uses the same CMY artwork in both appearance modes. */
 
 @media (prefers-reduced-motion: reduce) {
   #buzz-launch {

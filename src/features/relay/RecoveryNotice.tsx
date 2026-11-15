@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { ToastNotice } from "../../shared/design-system/ui/Toast";
 import { isSignInRefusal, type RelayRecovery } from "./recovery";
@@ -91,7 +92,7 @@ export function useRecoveryOwns(
   return recovering && owned;
 }
 
-export const RECOVERY_TITLE = "Buzz is having trouble connecting";
+export const RECOVERY_TITLE = `${appName()} is having trouble connecting`;
 
 /** The one relay recovery notice, on every page. Recovery retries on its own,
  * so it offers no button. */

@@ -1,3 +1,4 @@
+import { appName } from "../shared/app-name";
 import { useRef, useState } from "react";
 import type { PluginInfo } from "../plugins/types";
 import type { PluginManager } from "../plugins/manager";
@@ -194,7 +195,7 @@ export function PluginMenu({
       {confirmDelete && (
         <AlertDialog
           title={`Delete ${plugin.manifest.name}?`}
-          description="Removes this plugin and its rollback history from Buzz. You can install it again later."
+          description={`Removes this plugin and its rollback history from ${appName()}. You can install it again later.`}
           pending={busy || deleting}
           finalFocus={deleteTrigger}
           initialFocus={cancelDelete}

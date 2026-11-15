@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import * as React from "react";
 
 import { summarizeWaveform, VOICE_NOTE_WAVEFORM_INTERVAL_MS } from "./audio";
@@ -182,7 +183,7 @@ export function useVoiceNoteRecorder() {
                 mountedRef.current &&
                 sessionRef.current === session
               ) {
-                setError("Buzz could not prepare this voice note for upload.");
+                setError(`${appName()} could not prepare this voice note for upload.`);
               }
             }
           }
@@ -245,8 +246,8 @@ export function useVoiceNoteRecorder() {
         (cause.name === "NotAllowedError" || cause.name === "SecurityError");
       setError(
         denied
-          ? "Allow Buzz to access your microphone to record a voice note."
-          : "Buzz could not start the voice recorder.",
+          ? `Allow ${appName()} to access your microphone to record a voice note.`
+          : `${appName()} could not start the voice recorder.`,
       );
     }
   }, [cancel]);

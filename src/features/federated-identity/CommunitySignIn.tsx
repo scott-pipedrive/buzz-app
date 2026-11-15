@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import type { FederatedIdentity, SessionSnapshot } from "./service";
 import type { Membership } from "../communities/service";
@@ -13,12 +14,12 @@ export const SIGN_IN_TIMED_OUT = "Sign-in timed out. Try again.";
 export function recoveryMessage(code: string) {
   if (code === "sign-in-timed-out") return SIGN_IN_TIMED_OUT;
   if (code === "storage-busy")
-    return "Secure storage is busy. Close another Buzz instance and try again.";
+    return `Secure storage is busy. Close another ${appName()} instance and try again.`;
   // A record native can't decode, or (on Linux) duplicate keyring items: no
   // sign-in can compare and replace it. Sign out of Buzz deletes a damaged
   // record without reading it, but not duplicates, so it isn't offered here.
   if (code === "storage-corrupt")
-    return "Buzz can’t read its saved sign-in for this server, and signing in again may not replace it. If this keeps happening, contact support.";
+    return `${appName()} can’t read its saved sign-in for this server, and signing in again may not replace it. If this keeps happening, contact support.`;
   if (code.startsWith("storage-"))
     return "Sign-in could not access secure storage. Check your system’s credential permissions and try again.";
   if (code === "sign-in-canceled")
@@ -162,7 +163,7 @@ function Action({
       return (
         <p role="alert" className="text-body-sm text-danger">
           {mismatch
-            ? "This account is linked to a different Buzz identity. Keep this key until you have reviewed the identity link."
+            ? `This account is linked to a different ${appName()} identity. Keep this key until you have reviewed the identity link.`
             : "Your account does not have access to this community. Contact its administrator."}
         </p>
       );
@@ -190,8 +191,8 @@ function Action({
   if (ISSUER_REFUSALS.has(refusal))
     return (
       <p role="alert" className="text-body-sm text-danger">
-        Buzz couldn’t confirm your organization sign-in for this community.{" "}
-        {asksAgain ? "Try again." : "Restart Buzz to try again."} If it keeps
+        {`${appName()} couldn’t confirm your organization sign-in for this community.`}{" "}
+        {asksAgain ? "Try again." : `Restart ${appName()} to try again.`} If it keeps
         happening, contact your administrator.
       </p>
     );
@@ -308,7 +309,7 @@ function SwitchAccount({
     <>
       <p role="alert" className="text-body-sm text-danger">
         {mismatch
-          ? `Your ${server} account (signed in as ${account}) is linked to a different Buzz identity. Keep this key until you have reviewed the link at ${new URL(authority.identityOrigin).host}, or switch to another ${server} account.`
+          ? `Your ${server} account (signed in as ${account}) is linked to a different ${appName()} identity. Keep this key until you have reviewed the link at ${new URL(authority.identityOrigin).host}, or switch to another ${server} account.`
           : `This community didn’t accept your ${server} account (signed in as ${account}).`}
       </p>
       {affects}
@@ -474,8 +475,8 @@ export function CommunityRefusalNotice({
   if (!identity || !state || !authority)
     return refusal === "sign-in" ? (
       <ToastNotice
-        title="This community needs a sign-in Buzz doesn’t support yet"
-        description="Ask the community’s admin which Buzz version or server to use."
+        title={`This community needs a sign-in ${appName()} doesn’t support yet`}
+        description={`Ask the community’s admin which ${appName()} version or server to use.`}
       />
     ) : (
       <ToastNotice

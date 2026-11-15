@@ -21,7 +21,7 @@ const INVALID: &str = "Enter a valid nsec private key";
 const MALFORMED: &str = "Saved identity is malformed; nothing was changed. Keep your key backup and contact support before changing secure storage.";
 // Keyring only. Not MALFORMED: deleting refuses too, so removing the key can't work here.
 #[cfg(not(test))]
-const AMBIGUOUS: &str = "More than one saved identity matches in secure storage, so Buzz can't tell which to use; nothing was changed. Remove the extra Buzz entries with your keyring app, then retry.";
+const AMBIGUOUS: &str = concat!("More than one saved identity matches in secure storage, so ", env!("BUZZ_DISPLAY_NAME"), " can't tell which to use; nothing was changed. Remove the extra ", env!("BUZZ_DISPLAY_NAME"), " entries with your keyring app, then retry.");
 
 // Batch-local conversation keys avoid repeating ECDH for every self-encrypted slot.
 // Callers enforce their encoded-payload budget before reaching this helper.
@@ -188,7 +188,7 @@ fn read_saved(
         Ok(value) => Ok(Some(value)),
         Err(credentials::Error::Absent) => Ok(None),
         Err(credentials::Error::Denied) => Err("Secure storage access was denied. Allow access and retry; nothing was changed.".into()),
-        Err(credentials::Error::Busy) => Err("Another Buzz app is accessing secure storage. Retry shortly.".into()),
+        Err(credentials::Error::Busy) => Err(concat!("Another ", env!("BUZZ_DISPLAY_NAME"), " app is accessing secure storage. Retry shortly.").into()),
         Err(credentials::Error::Corrupt) => Err(MALFORMED.into()),
         Err(credentials::Error::Ambiguous) => Err(AMBIGUOUS.into()),
         Err(_) => Err("Your identity could not be accessed in secure storage. Unlock your credential store and retry without changing keys.".into()),
@@ -247,10 +247,10 @@ mod platform {
         match credentials::delete(service, credentials::HUMAN_ACCOUNT) {
             Ok(()) | Err(credentials::Error::Absent) => Ok(()),
             Err(credentials::Error::Busy) => {
-                Err("Another Buzz app is accessing secure storage. Retry shortly.".into())
+                Err(concat!("Another ", env!("BUZZ_DISPLAY_NAME"), " app is accessing secure storage. Retry shortly.").into())
             }
             Err(credentials::Error::Denied) => Err(
-                "Keychain access was denied. Allow access and open Buzz again to finish signing out."
+                concat!("Keychain access was denied. Allow access and open ", env!("BUZZ_DISPLAY_NAME"), " again to finish signing out.")
                     .into(),
             ),
             Err(_) => Err(
@@ -268,7 +268,7 @@ mod keyring_platform {
         match error {
             Error::Occupied => "An identity is already saved; nothing was overwritten. Restart to restore it.",
             Error::Denied => "Secure storage access was denied. Allow access and retry; no identity was created.",
-            Error::Busy => "Another Buzz app is accessing secure storage. Retry shortly.",
+            Error::Busy => concat!("Another ", env!("BUZZ_DISPLAY_NAME"), " app is accessing secure storage. Retry shortly."),
             Error::Corrupt => MALFORMED,
             Error::Ambiguous => AMBIGUOUS,
             _ => "Your identity could not be accessed in secure storage. Unlock your credential store and retry without changing keys.",
@@ -378,7 +378,7 @@ struct Identity {
 impl Identity {
     fn restore(&mut self) -> Result<Option<String>> {
         if matches!(self.state, State::Closed) {
-            return Err("Buzz is signing out".into());
+            return Err(concat!(env!("BUZZ_DISPLAY_NAME"), " is signing out").into());
         }
         if matches!(self.state, State::Unread) {
             self.state = match self.store.read()? {
@@ -420,7 +420,7 @@ impl Identity {
         let key = match self.legacy.take() {
             Some(key) => key,
             None => Key::parse(self.store.legacy().map_err(|error| error.message)?.trim())
-                .map_err(|_| "The earlier Buzz app's identity is malformed; nothing was changed")?,
+                .map_err(|_| concat!("The earlier ", env!("BUZZ_DISPLAY_NAME"), " app's identity is malformed; nothing was changed"))?,
         };
         if let Some(expected) = expected {
             if key.viewer()? != expected {

@@ -5,6 +5,7 @@
 // first write, whether its last try failed, and whether this device's own
 // create of the relay team landed: only then may the move write over what is
 // there.
+import { appName } from "../../shared/app-name";
 import type { AgentStore } from "./store";
 import type { TeamSent } from "./team-ops";
 
@@ -110,11 +111,11 @@ const REASONS = {
   team: {
     communities: "Its agents are in different communities.",
     unsupported: "This community's relay doesn't sync teams.",
-    failed: "Moving it to the community failed; Buzz will try again.",
+    failed: `Moving it to the community failed; ${appName()} will try again.`,
   },
   agent: {
     unsupported: "This community's relay doesn't sync agent settings.",
-    failed: "Copying it to the community failed; Buzz will try again.",
+    failed: `Copying it to the community failed; ${appName()} will try again.`,
   },
 } satisfies {
   team: Record<LocalReason, string>;

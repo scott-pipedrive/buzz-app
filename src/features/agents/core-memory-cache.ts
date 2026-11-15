@@ -4,6 +4,7 @@
 // the relay: the agents service refreshes it when an agent's community
 // connects or its connection recovers, and the runner when the agent writes
 // memory and when a run ends.
+import { appName } from "../../shared/app-name";
 import { coreOf, MemoryReads } from "../agent-harness/core-memory";
 import type { AgentReads } from "./reads";
 
@@ -60,7 +61,7 @@ export class CoreMemoryCache {
     const timeout = AbortSignal.timeout(FIRST_READ_MS);
     try {
       const reads = this.reads(pubkey);
-      if (!reads) throw new Error("Buzz is not connected");
+      if (!reads) throw new Error(`${appName()} is not connected`);
       const cached = this.latest.get(this.key(reads.scope, pubkey));
       if (cached !== undefined) return cached;
       return await this.read(

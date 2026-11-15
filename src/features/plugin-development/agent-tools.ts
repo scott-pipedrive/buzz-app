@@ -4,6 +4,7 @@
 // changed host access) between a disable and an enable, so an agent can never
 // grant a plugin more than its owner reviewed, and a new plugin still needs
 // the owner to load it in Settings.
+import { appName } from "../../shared/app-name";
 import guide from "../../../docs/plugin-authoring-guide.md?raw";
 import type { AddedTool } from "../../buzz-mcp/session-tools";
 import type { PluginManager } from "../../plugins/manager";
@@ -45,7 +46,7 @@ export function registerPluginDevelopmentTools(host: PluginDevelopmentHost) {
   const catalog = () => {
     const { configuration } = host.plugins().snapshot();
     if (configuration.status === "loading")
-      throw new Error("Buzz is still reading its plugins. Try again.");
+      throw new Error(`${appName()} is still reading its plugins. Try again.`);
     if (configuration.status === "recovery")
       throw new Error(
         `Plugin settings need recovery in Settings → Plugins: ${configuration.reason}`,
@@ -108,7 +109,7 @@ export function registerPluginDevelopmentTools(host: PluginDevelopmentHost) {
   };
   const missing = (id: string) =>
     activation(id)
-      ? new Error(`${id} is built into Buzz and cannot be changed.`)
+      ? new Error(`${id} is built into ${appName()} and cannot be changed.`)
       : new Error(`No plugin ${id} is installed. ${LOAD_FROM_FOLDER}`);
 
   /** The plugin's state once `revision` has finished starting, or undefined
@@ -137,7 +138,7 @@ export function registerPluginDevelopmentTools(host: PluginDevelopmentHost) {
   host.agents.addTool({
     name: "plugin_authoring_guide",
     description:
-      "Read this before writing or changing a Buzz plugin (a page, panel, sidebar section, settings card or agent tool in this app). Returns the plugin contract, a template to copy and how to install and reload it.",
+      `Read this before writing or changing a ${appName()} plugin (a page, panel, sidebar section, settings card or agent tool in this app). Returns the plugin contract, a template to copy and how to install and reload it.`,
     inputSchema: {
       type: "object",
       properties: {},
@@ -151,7 +152,7 @@ export function registerPluginDevelopmentTools(host: PluginDevelopmentHost) {
   host.agents.addTool({
     name: "plugin_status",
     description:
-      "List Buzz plugins with whether each is enabled and running (starting, active, failed or stopped). With id, also returns that plugin's error, revision, source folder and what it registered (pages, panels, sidebar sections, agent tools). Use it before and after plugin_reload.",
+      `List ${appName()} plugins with whether each is enabled and running (starting, active, failed or stopped). With id, also returns that plugin's error, revision, source folder and what it registered (pages, panels, sidebar sections, agent tools). Use it before and after plugin_reload.`,
     inputSchema: {
       type: "object",
       properties: {
@@ -215,7 +216,7 @@ export function registerPluginDevelopmentTools(host: PluginDevelopmentHost) {
     const plugin = find(id);
     if (!plugin) throw missing(id);
     if (plugin.source === "bundled")
-      throw new Error(`${id} is bundled with Buzz and cannot be reloaded.`);
+      throw new Error(`${id} is bundled with ${appName()} and cannot be reloaded.`);
     if (!plugin.reloadable || !folder(plugin))
       throw new Error(
         `${id} was not installed from a folder, so it has no folder to reload. ${LOAD_FROM_FOLDER}`,
@@ -277,7 +278,7 @@ export function registerPluginDevelopmentTools(host: PluginDevelopmentHost) {
         revision,
         unchanged,
         nextStep:
-          "Buzz was started with external plugins paused (safe mode), so it is saved but not running. It runs after a normal restart.",
+          `${appName()} was started with external plugins paused (safe mode), so it is saved but not running. It runs after a normal restart.`,
       });
     const state = await settled(id, revision);
     if (state?.status === "active")

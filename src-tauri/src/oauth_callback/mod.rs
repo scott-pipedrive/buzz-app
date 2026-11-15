@@ -419,17 +419,19 @@ async fn reply(stream: &mut TcpStream, status: u16, message: &str, builderlab: b
     let script = format!("<script>{script}</script>");
     let artwork = base64::engine::general_purpose::STANDARD.encode(include_bytes!("cubes.webp"));
     let artwork = include_str!("artwork.html").replace("{{artwork}}", &artwork);
-    let provider = if builderlab { "Builderlab" } else { "Buzz" };
+    let provider = if builderlab { "Builderlab" } else { crate::DISPLAY_NAME };
     let mark = if builderlab {
         include_str!("../../../public/builderlab-mark.svg")
+    } else if crate::DISPLAY_NAME == "Spheres" {
+        include_str!("../../../public/spheres-mark.svg")
     } else {
         include_str!("../../../public/buzz-mark.svg")
     };
-    let label = if builderlab { "" } else { "<span>Buzz</span>" };
+    let label = if builderlab { String::new() } else { format!("<span>{provider}</span>") };
     let brand = include_str!("brand.html")
         .replace("{{provider}}", provider)
         .replace("{{mark}}", mark)
-        .replace("{{label}}", label);
+        .replace("{{label}}", &label);
     // Replace whole HTML comments so the template remains valid on its own.
     let body = include_str!("page.html")
         .replace("<!-- {{pageBrand}} -->", &brand)

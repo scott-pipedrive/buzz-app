@@ -2287,6 +2287,7 @@ function ChannelWorkspace({
         as="article"
         ref={conversation}
         aria-label="Conversation"
+        data-active-conversation={current ? "" : undefined}
         data-overlay-boundary=""
         data-solo-focus-pane={solo ? "" : undefined}
         inert={covered}

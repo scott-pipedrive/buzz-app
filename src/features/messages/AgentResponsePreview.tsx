@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import { Avatar } from "../../shared/design-system/ui/Avatar";
 import { RobotIcon } from "../../shared/design-system/icons";
 import { useMessageDensity } from "../../shared/theme/message-density";
+import { expressiveAvatar } from "../agents/avatar-packs";
+import type { SpheresAvatarExpression } from "../agents/spheres-avatar-pack";
 import styles from "./Messages.module.css";
 
 /** Incoming message geometry for work that has not published a response yet. */
@@ -22,6 +24,7 @@ export function AgentResponsePreview({
     id: string;
     name: string;
     picture?: string | undefined;
+    expression?: SpheresAvatarExpression | undefined;
   }[];
   layout?: "timeline" | "thread" | "continuation" | undefined;
   children: ReactNode;
@@ -54,21 +57,30 @@ export function AgentResponsePreview({
                   : name
               }
             >
-              {avatars.map((agent) => (
-                <span
-                  key={agent.id}
-                  className={styles.agentAvatarGroupItem}
-                  title={agent.name}
-                >
-                  <Avatar
-                    src={agent.picture}
-                    alt=""
-                    fallback={agent.name}
-                    shape="squircle"
-                    size="fill"
-                  />
-                </span>
-              ))}
+              {avatars.map((agent) => {
+                const picture = expressiveAvatar(
+                  agent.picture,
+                  agent.expression,
+                );
+                return (
+                  <span
+                    key={agent.id}
+                    className={styles.agentAvatarGroupItem}
+                    title={agent.name}
+                  >
+                    <Avatar
+                      src={picture}
+                      alt=""
+                      fallback={agent.name}
+                      shape="squircle"
+                      size="fill"
+                      {...(picture !== agent.picture
+                        ? { loading: "eager" }
+                        : {})}
+                    />
+                  </span>
+                );
+              })}
             </span>
           </div>
           {!stackPrevious && (

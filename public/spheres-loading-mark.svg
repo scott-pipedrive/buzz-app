@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <title>Opening Spheres</title>
+  <defs>
+    <circle id="cyan" cx="44.1" cy="46.5" r="30"><animate attributeName="cx" values="44.1;34.1;44.1" dur="1.76s" repeatCount="indefinite" calcMode="spline" keySplines=".4 0 .2 1;.4 0 .2 1"/></circle>
+    <clipPath id="clip-cyan"><use href="#cyan"/></clipPath>
+    <circle id="magenta" cx="77.7" cy="53.4" r="30"><animate attributeName="cx" values="77.7;87.7;77.7" dur="1.76s" repeatCount="indefinite" calcMode="spline" keySplines=".4 0 .2 1;.4 0 .2 1"/></circle>
+    <clipPath id="clip-magenta"><use href="#magenta"/></clipPath>
+    <circle id="yellow" cx="58.2" cy="80.1" r="30"><animate attributeName="cy" values="80.1;90.1;80.1" dur="1.76s" repeatCount="indefinite" calcMode="spline" keySplines=".4 0 .2 1;.4 0 .2 1"/></circle>
+    <clipPath id="clip-yellow"><use href="#yellow"/></clipPath>
+  </defs>
+  <use href="#cyan" fill="#00a2cf"/>
+  <use href="#magenta" fill="#ef0e73"/>
+  <use href="#yellow" fill="#fccc00"/>
+  <g clip-path="url(#clip-magenta)"><use href="#cyan" fill="#001a8a"/></g>
+  <g clip-path="url(#clip-yellow)"><use href="#cyan" fill="#06811d"/></g>
+  <g clip-path="url(#clip-yellow)"><use href="#magenta" fill="#e40b05"/></g>
+  <g clip-path="url(#clip-yellow)"><g clip-path="url(#clip-magenta)"><use href="#cyan" fill="#0c0512"/></g></g>
+</svg>

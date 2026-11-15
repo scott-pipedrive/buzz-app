@@ -1,3 +1,4 @@
+import { appName } from "../shared/app-name";
 // Matches the repeated SMIL tracks in public/buzz-loading-mark.svg.
 const CYCLE_MS = 1760;
 const FADE_MS = 220;
@@ -31,7 +32,7 @@ declare global {
  * before its launch ended; "Buzz stopped working" when React unmounts it after
  * the launch ended. */
 export function showStartupFailure(error: unknown, detail?: string) {
-  console.error("Buzz could not start or continue", error);
+  console.error(`${appName()} could not start or continue`, error);
   window.__buzzStartup?.failed(error, detail);
 }
 

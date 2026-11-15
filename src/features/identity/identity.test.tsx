@@ -19,6 +19,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import type { EventTemplate } from "nostr-tools";
 import { npubEncode, nsecEncode } from "nostr-tools/nip19";
 import { formatPublicKey } from "../../shared/identity/public-key";
+import { appName } from "../../shared/app-name";
 import nsecBackup from "../../../src-tauri/src/nsec_backup.rs?raw";
 import nativeIdentity from "../../../src-tauri/src/identity.rs?raw";
 import {
@@ -102,7 +103,7 @@ const credential: Credential = {
     canUseBuilderlabDecisions: false,
   },
 };
-const welcomeHeading = () => screen.getByRole("heading", { name: "Buzz" });
+const welcomeHeading = () => screen.getByRole("heading", { name: "Spheres" });
 const connectButton = () => screen.getByRole("button", { name: CONNECT });
 const landingSignIn = () => screen.getByRole("button", { name: SIGN_IN });
 function titleBar() {
@@ -224,6 +225,43 @@ afterEach(async () => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   localStorage.clear();
+});
+
+it("creates a local Spheres identity and pre-fills the community without sign-in", async () => {
+  const origin = "https://buzz.askbellboy.com";
+  vi.stubEnv("VITE_BUZZ_DEFAULT_COMMUNITY", origin);
+  vi.mocked(invoke).mockImplementation(async (command) => {
+    if (command === "identity_restore") return null;
+    if (command === "identity_create") return viewer;
+    if (command === "identity_legacy_available") return false;
+    if (command === "nsec_backup_choice")
+      return { available: false, pubkey: viewer, automatic: null };
+    throw new Error(`Unexpected command: ${command}`);
+  });
+  const identity = createIdentity();
+  const user = userEvent.setup();
+  render(
+    <Welcome
+      identity={identity}
+      communities={communitiesFor(identity)}
+      invites={{ open: vi.fn() }}
+    >
+      <p>Workspace</p>
+    </Welcome>,
+  );
+
+  const create = await screen.findByRole("button", {
+    name: "Create a Spheres identity",
+  });
+  expect(screen.queryByRole("button", { name: "Sign in" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Create account" })).toBeNull();
+  await user.click(create);
+  expect(
+    await screen.findByRole("heading", { name: "Connect to a community" }),
+  ).toBeVisible();
+  expect(screen.getByRole("textbox")).toHaveValue(origin);
+  expect(invoke).toHaveBeenCalledWith("identity_create", {});
+  identity.dispose();
 });
 
 it("keeps native titlebar actions available throughout identity setup without dragging form controls", async () => {
@@ -429,6 +467,28 @@ it.each([
   ).toBeEnabled();
   expect(invoke).toHaveBeenCalledTimes(1);
   identity.dispose();
+});
+
+it("shows a slow secure-storage read and still accepts its result", async () => {
+  vi.useFakeTimers();
+  const restore = deferred<string>();
+  vi.mocked(invoke).mockImplementation(() => restore.promise);
+  const identity = createIdentity();
+  try {
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(identity.snapshot()).toMatchObject({
+      status: "error",
+      waitingForStorage: true,
+    });
+    await identity.retry();
+    expect(invoke).toHaveBeenCalledTimes(1);
+    restore.resolve(viewer);
+    expect(await identity.ready).toBe(viewer);
+    expect(identity.snapshot()).toEqual({ status: "ready", viewer });
+  } finally {
+    identity.dispose();
+    vi.useRealTimers();
+  }
 });
 
 it("prefers the associated identity, waits for explicit consent and persistence before becoming ready", async () => {
@@ -840,8 +900,8 @@ it("first launch prioritizes email and preserves community entry behind Other op
   expect(await screen.findByRole("button", { name: SIGN_IN })).toBeEnabled();
   expect(welcomeHeading()).toBeVisible();
   expect(
-    screen.getByText("Your people, your agents, one place."),
-  ).toBeVisible();
+    screen.queryByText("Your people, your agents, one place."),
+  ).not.toBeInTheDocument();
   expect(screen.queryByRole("textbox", { name: "Community URL" })).toBeNull();
   const options = screen.getByRole("button", { name: "Other options" });
   fireEvent.click(options);
@@ -5060,7 +5120,7 @@ it("Enter your private key on Welcome back classifies what is pasted, and Back r
   const user = userEvent.setup();
   await keyImportPage(user, identity);
   expect(
-    screen.getByText(/Paste your private key to sign in to Buzz\./),
+    screen.getByText(`Paste your private key to restore your ${appName()} profile. You can also select or drop a text file with your key.`),
   ).toBeVisible();
   // Masked and focused on arrival; reveal requires an explicit action.
   expect(keyField()).toHaveFocus();
@@ -5513,7 +5573,7 @@ it.each([
     // Back on the landing, signed out of the organization on an FI build; the
     // linked key was never imported or replaced, and its npub is gone with
     // the page.
-    expect(await screen.findByRole("heading", { name: "Buzz" })).toBeVisible();
+    await waitFor(() => expect(welcomeHeading()).toBeVisible());
     expect(fi.service.signOut).toHaveBeenCalledTimes(federated ? 1 : 0);
     expect(fi.service.snapshot().status).toBe(
       federated ? "signed-out" : "signed-in",
@@ -8667,7 +8727,7 @@ it("a sign-out that never restarts Buzz fails setup instead of waiting forever",
     await vi.advanceTimersByTimeAsync(30_000);
     expect(
       await screen.findByText(
-        "Buzz didn’t restart. Quit and reopen Buzz to finish.",
+        `${appName()} didn’t restart. Quit and reopen it to finish.`,
       ),
     ).toBeVisible();
     identity.dispose();

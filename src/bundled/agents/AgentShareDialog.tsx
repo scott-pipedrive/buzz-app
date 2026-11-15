@@ -1,5 +1,6 @@
 // Share: send the agent to people or a channel, list it in its community's Marketplace, or
 // export it as a file.
+import { appName } from "../../shared/app-name";
 import { isTauri } from "@tauri-apps/api/core";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -526,8 +527,7 @@ export function AgentShareDialog({
             menu={
               <>
                 <MenuNote>
-                  An agent card is an image that holds the agent’s setup, so
-                  anyone can add it to Buzz.
+                  {`An agent card is an image that holds the agent’s setup, so anyone can add it to ${appName()}.`}
                 </MenuNote>
                 <MenuRadioGroup
                   value={format}

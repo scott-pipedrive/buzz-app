@@ -12,7 +12,7 @@ import { launchVisible, subscribeLaunch } from "../../app/launch";
 const KEY = "buzz-mac-welcome-intro.v1";
 export function useWelcomeIntro(welcome: boolean) {
   const launching = useSyncExternalStore(subscribeLaunch, launchVisible);
-  const [phase, setPhase] = useState<"waiting" | "running" | "done">(() => {
+  const [phase, setPhase] = useState<"waiting" | "done">(() => {
     try {
       return welcome &&
         document.documentElement.dataset.welcomeIntro === "pending" &&
@@ -46,7 +46,6 @@ export function useWelcomeIntro(welcome: boolean) {
         .show()
         .catch(() => {});
     };
-    let timer: number | undefined;
     const prepare = async () => {
       const window = getCurrentWindow();
       const fullscreen = await window.isFullscreen();
@@ -87,9 +86,7 @@ export function useWelcomeIntro(welcome: boolean) {
         return;
       }
       localStorage.setItem(KEY, "seen");
-      document.documentElement.dataset.welcomeIntro = "running";
-      setPhase("running");
-      timer = globalThis.window.setTimeout(finish, 8400);
+      finish();
     };
     void prepare().catch((error) => {
       console.warn("Welcome intro preparation failed", error);
@@ -101,7 +98,6 @@ export function useWelcomeIntro(welcome: boolean) {
     reduced.addEventListener("change", finish, { once: true });
     return () => {
       cancelled = true;
-      clearTimeout(timer);
       window.removeEventListener("keydown", finish);
       reduced.removeEventListener("change", finish);
       delete document.documentElement.dataset.welcomeIntro;

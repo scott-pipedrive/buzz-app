@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import type { Root, RootContent, ListItem } from "mdast";
 import { fromMarkdown } from "mdast-util-from-markdown";
 import { gfmStrikethrough } from "micromark-extension-gfm-strikethrough";
@@ -161,7 +162,7 @@ export function assignTodo(
   if (!item)
     throw new Error("This todo changed. Reload the Canvas before editing it.");
   const target = assignee && profileTarget(assignee.pubkey);
-  if (assignee && !target) throw new Error("Choose a valid Buzz user.");
+  if (assignee && !target) throw new Error(`Choose a valid ${appName()} user.`);
   const name =
     assignee?.name.replace(/\s+/g, " ").trim() || assignee?.pubkey || "";
   const escaped = name.replace(/[\\`*_{}[\]()#+\-.!<>|&]/g, "\\$&");

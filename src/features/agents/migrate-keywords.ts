@@ -3,6 +3,7 @@
 // `keywords` selector until it was removed; the relay attention spec never had
 // one. Startup turns each such watch off and gives its Interest a notice
 // timer that tells the agent why, so the agent can rework the watch.
+import { appName } from "../../shared/app-name";
 import { AGENT_BYTES } from "./attention-objects";
 import { OBJECT_LIMIT, validateObject, watchSlug } from "./attention";
 import type { AgentStore } from "./state";
@@ -24,7 +25,7 @@ const notice = (
   wasOn: boolean,
   fix: string,
 ) =>
-  `Buzz no longer supports the keywords selector on event watches. Your watch ${JSON.stringify(id)}${typeof name === "string" ? ` (${name})` : ""} matched only events whose content contained any of ${JSON.stringify(keywords)}. ${wasOn ? "Buzz removed the keywords and turned the watch off." : "Buzz removed the keywords. The watch was already off: someone paused it before this change, so leave it off unless your instructions call for it to run."} If you turn it on as it is, it wakes you for every event its remaining selectors match. To keep it, first narrow it with a classifier question or with authors, exclude_authors, tags or is_reply${wasOn ? ", then enable it" : ""}. If the Interest no longer needs it, remove it. If you already handled this, only remove this notice. Otherwise, when you are done, remove it with watch_remove id ${JSON.stringify(fix.slice("watch/".length))}; until you do, it repeats up to ${OCCURRENCES} times, an hour apart.`;
+  `${appName()} no longer supports the keywords selector on event watches. Your watch ${JSON.stringify(id)}${typeof name === "string" ? ` (${name})` : ""} matched only events whose content contained any of ${JSON.stringify(keywords)}. ${wasOn ? `${appName()} removed the keywords and turned the watch off.` : `${appName()} removed the keywords. The watch was already off: someone paused it before this change, so leave it off unless your instructions call for it to run.`} If you turn it on as it is, it wakes you for every event its remaining selectors match. To keep it, first narrow it with a classifier question or with authors, exclude_authors, tags or is_reply${wasOn ? ", then enable it" : ""}. If the Interest no longer needs it, remove it. If you already handled this, only remove this notice. Otherwise, when you are done, remove it with watch_remove id ${JSON.stringify(fix.slice("watch/".length))}; until you do, it repeats up to ${OCCURRENCES} times, an hour apart.`;
 
 /** A free timer slug for the watch `id`. */
 function timerSlug(attention: Record<string, unknown>, id: string) {

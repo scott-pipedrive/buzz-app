@@ -577,6 +577,31 @@ fn enabled_by_default(id: &str) -> bool {
             | "buzz.plugin-development"
     )
 }
+
+const SPHERES_PLUGIN_DEFAULTS: Option<&str> = option_env!("BUZZ_BUILD_SPHERES_PLUGIN_DEFAULTS");
+
+fn fresh_plugin_default(id: &str) -> bool {
+    if SPHERES_PLUGIN_DEFAULTS == Some("1") {
+        matches!(
+            id,
+            "buzz.channels"
+                | "buzz.profiles"
+                | "buzz.inbox"
+                | "buzz.identity-naming"
+                | "buzz.links"
+                | "buzz.link-previews"
+                | "buzz.moderation"
+                | "buzz.relay-staff"
+                | "buzz.agents"
+                | "buzz.codex"
+                | "buzz.agent-activity"
+                | "buzz.watching"
+        )
+    } else {
+        enabled_by_default(id)
+    }
+}
+
 /// Bundled ids that older profiles may still hold as installed plugins.
 const FORMERLY_INSTALLED: &[&str] = &["buzz.claude-code", "buzz.codex"];
 /// Host-owned features stay reserved even though they have no catalog entries.
@@ -679,12 +704,13 @@ fn pin_bundled_defaults(registry: &mut Registry, existing_profile: bool) -> bool
             .entry(manifest.id.clone())
             .or_insert_with(|| {
                 changed = true;
-                if existing_profile && manifest.id == "buzz.bestie" {
+                if !existing_profile {
+                    fresh_plugin_default(&manifest.id)
+                } else if manifest.id == "buzz.bestie" {
                     false
                 } else {
                     enabled_by_default(&manifest.id)
-                        || (existing_profile
-                            && matches!(manifest.id.as_str(), "buzz.reminders" | "buzz.workflows"))
+                        || matches!(manifest.id.as_str(), "buzz.reminders" | "buzz.workflows")
                 }
             });
     }
@@ -1068,6 +1094,7 @@ impl Manager {
         let registry = self.lock().and_then(|_lock| self.read())?;
         let mut plugins: Vec<PluginInfo> = bundled_manifests()
             .into_iter()
+            .filter(|manifest| manifest.id != "block.builderlab" || !BUILDERLAB_ORIGIN.is_empty())
             .map(|manifest| {
                 // Required even when an older profile saved a disabled override.
                 let enabled = manifest.id == "buzz.channels"
@@ -1075,7 +1102,7 @@ impl Manager {
                         .bundled_overrides
                         .get(&manifest.id)
                         .copied()
-                        .unwrap_or_else(|| enabled_by_default(&manifest.id));
+                        .unwrap_or_else(|| fresh_plugin_default(&manifest.id));
                 PluginInfo {
                     manifest,
                     source: "bundled",
@@ -2776,6 +2803,15 @@ mod tests {
     fn host_grants_follow_enabled_bundled_manifest() {
         let temp = tempfile::tempdir().unwrap();
         let manager = Manager::open(Some(temp.path().into()), "test", false).unwrap();
+        if super::BUILDERLAB_ORIGIN.is_empty() {
+            let catalog = manager.catalog().unwrap();
+            assert!(!catalog
+                .plugins
+                .iter()
+                .any(|plugin| plugin.manifest.id == "block.builderlab"));
+            assert!(manager.host_grants("block.builderlab", "bundled").is_err());
+            return;
+        }
         let grants = manager.host_grants("block.builderlab", "bundled").unwrap();
         // Only the native session's Builderlab routes are granted, and only in
         // an FI build.
@@ -2899,11 +2935,66 @@ mod tests {
                 .find(|plugin| plugin.manifest.id == "buzz.huddles")
                 .expect("Desktop must expose the Huddles plugin")
         };
-        assert!(huddles().enabled);
+        assert_eq!(huddles().enabled, super::SPHERES_PLUGIN_DEFAULTS != Some("1"));
         manager.change("disable", "buzz.huddles").unwrap();
         assert!(!huddles().enabled);
         manager.change("enable", "buzz.huddles").unwrap();
         assert!(huddles().enabled);
+    }
+
+    #[test]
+    fn spheres_plugin_defaults_apply_to_new_profiles_and_resets() {
+        if super::SPHERES_PLUGIN_DEFAULTS != Some("1") {
+            return;
+        }
+        let temp = tempfile::tempdir().unwrap();
+        let open = |profile| Manager::open(Some(temp.path().into()), profile, false).unwrap();
+        let enabled = |catalog: super::Catalog| {
+            catalog
+                .plugins
+                .into_iter()
+                .filter(|plugin| plugin.enabled)
+                .map(|plugin| plugin.manifest.id)
+                .collect::<std::collections::BTreeSet<_>>()
+        };
+        let expected = [
+            "buzz.agent-activity",
+            "buzz.agents",
+            "buzz.channels",
+            "buzz.codex",
+            "buzz.identity-naming",
+            "buzz.inbox",
+            "buzz.link-previews",
+            "buzz.links",
+            "buzz.moderation",
+            "buzz.profiles",
+            "buzz.relay-staff",
+            "buzz.watching",
+        ]
+        .map(String::from)
+        .into_iter()
+        .collect::<std::collections::BTreeSet<_>>();
+
+        let fresh = open("fresh");
+        assert_eq!(enabled(fresh.catalog().unwrap()), expected);
+        assert_eq!(enabled(open("fresh").catalog().unwrap()), expected);
+
+        let legacy_path = temp.path().join("profiles").join("legacy");
+        fs::create_dir_all(&legacy_path).unwrap();
+        let legacy = open("legacy");
+        let legacy_enabled = enabled(legacy.catalog().unwrap());
+        assert!(legacy_enabled.contains("buzz.huddles"));
+        assert!(legacy_enabled.contains("buzz.workflows"));
+        assert!(!legacy_enabled.contains("buzz.bestie"));
+
+        legacy.change("disable", "buzz.huddles").unwrap();
+        legacy.change("enable", "buzz.todos").unwrap();
+        let upgraded = enabled(open("legacy").catalog().unwrap());
+        assert!(!upgraded.contains("buzz.huddles"));
+        assert!(upgraded.contains("buzz.todos"));
+        assert!(upgraded.contains("buzz.workflows"));
+        assert_eq!(enabled(legacy.recover().unwrap()), expected);
+        assert_eq!(enabled(open("legacy").catalog().unwrap()), expected);
     }
 
     #[test]

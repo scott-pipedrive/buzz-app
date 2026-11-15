@@ -2,7 +2,7 @@
   "id": "buzz.links",
   "name": "Links",
   "apiVersion": 1,
-  "description": "Render Buzz entities and web links with resolved labels.",
+  "description": "Show names and titles for app links and web links.",
   "discovery": {
     "category": "communication",
     "tags": ["Essentials", "messaging"]

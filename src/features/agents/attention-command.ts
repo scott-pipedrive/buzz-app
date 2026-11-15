@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import type { AttentionSource } from "./attention-sources";
 
 /** Saved identities belong to their bundled owners, including legacy aliases. */
@@ -115,7 +116,7 @@ export function registerAttention(
           throw new Error("cwd must be absolute");
         if (!spawn)
           throw new Error(
-            "This host cannot run commands as the agent. Update Buzz first.",
+            `This host cannot run commands as the agent. Update ${appName()} first.`,
           );
         let failure: Error | undefined;
         const process = await spawn("attention-command", {

@@ -1,6 +1,7 @@
 // goose on the shared ACP client: one `goose-acp` process, with goose's
 // extensions for the system prompt, steering, and per-turn provider and model
 // picks. Each session's Buzz tools reach goose over HTTP MCP, never a Buzz key.
+import { appName } from "../../shared/app-name";
 import { sessionTools } from "../../buzz-mcp/session-tools";
 import {
   AcpProcess,
@@ -78,7 +79,7 @@ const databricks = (): Record<string, string> => {
 export const GOOSE: AcpHooks = {
   label: "goose",
   program: "goose",
-  missing: "goose-acp is missing from this Buzz build.",
+  missing: `goose-acp is missing from this ${appName()} build.`,
   env: ENV,
   // goose is asked to close every session, advertised or not.
   closeSession: "always",

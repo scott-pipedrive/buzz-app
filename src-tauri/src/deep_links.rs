@@ -7,8 +7,9 @@ use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 use tauri::{ipc::Channel, Manager};
 
-/// All desktop builds use the same scheme as in-app links and Copy link.
+/// Canonical scheme used by the webview's existing link parsers.
 const SCHEME: &str = "buzz";
+const SPHERES_SCHEME: &str = "spheres";
 
 /// A cold start can receive links before the webview exists. The newest are kept so
 /// a late reader still sees the user's latest intent. The OS bounds each URL's size.
@@ -33,17 +34,32 @@ fn scheme(raw: &str) -> Option<&str> {
     raw.split_once(':').map(|(scheme, _)| scheme)
 }
 
-impl DeepLinks {
-    /// Hold one OS-delivered URL for the webview.
-    fn push(&self, raw: &str) -> Result<(), String> {
-        if scheme(raw) != Some(SCHEME) {
-            return Err("Not a buzz deep-link scheme".to_owned());
+fn canonical_link(raw: &str, accepts_spheres: bool) -> Result<String, String> {
+    if scheme(raw) == Some(SCHEME) {
+        return Ok(raw.to_owned());
+    }
+    if let Some(rest) = raw.strip_prefix("spheres:") {
+        if accepts_spheres && (rest.starts_with("//join?") || rest.starts_with("//join/?")) {
+            return Ok(format!("{SCHEME}:{rest}"));
         }
+    }
+    Err("Not a supported deep link".to_owned())
+}
+
+impl DeepLinks {
+    #[cfg(test)]
+    fn push(&self, raw: &str) -> Result<(), String> {
+        let raw = canonical_link(raw, false)?;
+        self.enqueue(raw)
+    }
+
+    /// Hold one OS-delivered URL for the webview.
+    fn enqueue(&self, url: String) -> Result<(), String> {
         let mut queue = self.0.lock().map_err(|_| "Deep link state unavailable")?;
         if queue.urls.len() >= MAX_PENDING {
             queue.urls.pop_front();
         }
-        queue.urls.push_back(raw.to_owned());
+        queue.urls.push_back(url);
         let pending = Pending {
             pending: queue.urls.len(),
         };
@@ -82,7 +98,9 @@ pub(crate) fn focus_main<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
 }
 
 fn accept<R: tauri::Runtime>(app: &tauri::AppHandle<R>, raw: &str) {
-    match app.state::<DeepLinks>().push(raw) {
+    let result = canonical_link(raw, desktop_schemes(app).any(|scheme| scheme == SPHERES_SCHEME))
+        .and_then(|url| app.state::<DeepLinks>().enqueue(url));
+    match result {
         Ok(()) => focus_main(app),
         // The URL itself is not logged; it may carry a message locator.
         Err(error) => eprintln!(
@@ -90,6 +108,17 @@ fn accept<R: tauri::Runtime>(app: &tauri::AppHandle<R>, raw: &str) {
             scheme(raw).unwrap_or_default()
         ),
     }
+}
+
+fn desktop_schemes<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> impl Iterator<Item = &str> {
+    app.config()
+        .plugins
+        .0
+        .get("deep-link")
+        .and_then(|config| config["desktop"]["schemes"].as_array())
+        .into_iter()
+        .flatten()
+        .filter_map(serde_json::Value::as_str)
 }
 
 /// Subscribe to the plugin and pick up a launch URL it already parsed.
@@ -113,7 +142,7 @@ pub(crate) fn setup<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
         Ok(None) => {}
         Err(error) => eprintln!("Could not read the launch deep link: {error}"),
     }
-    // Every packaged/debug launch makes this binary the scheme handler, over any
+    // Every packaged/debug launch claims its configured schemes, over any
     // other app declaring it. Development runs leave any installed handler alone.
     if tauri::is_dev() {
         return;
@@ -124,13 +153,15 @@ pub(crate) fn setup<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
     }
     // Launch Services otherwise picks among every bundle declaring the scheme.
     #[cfg(target_os = "macos")]
-    if let Err(status) = claim_macos_default(&app.config().identifier) {
-        eprintln!("Could not make this app the {SCHEME}:// handler: OSStatus {status}");
+    for scheme in desktop_schemes(app) {
+        if let Err(status) = claim_macos_default(scheme, &app.config().identifier) {
+            eprintln!("Could not make this app the {scheme}:// handler: OSStatus {status}");
+        }
     }
 }
 
 #[cfg(target_os = "macos")]
-fn claim_macos_default(bundle_id: &str) -> Result<(), i32> {
+fn claim_macos_default(scheme: &str, bundle_id: &str) -> Result<(), i32> {
     use objc2_foundation::NSString;
     // NSString is toll-free bridged to CFStringRef.
     #[link(name = "CoreServices", kind = "framework")]
@@ -138,7 +169,7 @@ fn claim_macos_default(bundle_id: &str) -> Result<(), i32> {
         fn LSSetDefaultHandlerForURLScheme(scheme: *const NSString, bundle: *const NSString)
             -> i32;
     }
-    let scheme = NSString::from_str(SCHEME);
+    let scheme = NSString::from_str(scheme);
     let bundle = NSString::from_str(bundle_id);
     match unsafe { LSSetDefaultHandlerForURLScheme(&*scheme, &*bundle) } {
         0 => Ok(()),
@@ -231,6 +262,18 @@ mod tests {
             assert!(links.push(raw).is_err(), "{raw}");
         }
         assert!(links.drain().unwrap().is_empty());
+    }
+
+    #[test]
+    fn spheres_opens_only_invites_and_only_when_configured() {
+        let query = "relay=wss%3A%2F%2Fbuzz.askbellboy.com&code=v2.invite";
+        let invite = format!("spheres://join?{query}");
+        assert_eq!(
+            canonical_link(&invite, true).unwrap(),
+            format!("buzz://join?{query}")
+        );
+        assert!(canonical_link(&invite, false).is_err());
+        assert!(canonical_link("spheres://channel/general", true).is_err());
     }
 
     #[test]

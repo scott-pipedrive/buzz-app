@@ -1,3 +1,4 @@
+import { appName } from "../../shared/app-name";
 import { useCallback, useSyncExternalStore } from "react";
 import type { Presence, PresenceStatus } from "./presence";
 
@@ -62,7 +63,7 @@ export function PresenceIndicator({
       title={
         presence.limited(pubkey)
           ? "Presence demand limit reached"
-          : "Recent Buzz session status in this community; periodically refreshed"
+          : `Recent ${appName()} session status in this community; periodically refreshed`
       }
     >
       {symbol} {label}
