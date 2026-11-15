@@ -623,14 +623,14 @@ export function AgentAvatarPicker({
                               selected.preview,
                             );
                           }
+                          const previous = selected ?? lastAvatar;
                           setSlots((current) =>
-                            selected &&
                             !current.some(
-                              (item) => item.avatar.url === selected.url,
+                              (item) => item.avatar.url === previous.url,
                             )
                               ? current.map((item) =>
                                   item.id === id
-                                    ? { ...item, avatar: selected }
+                                    ? { ...item, avatar: previous }
                                     : item,
                                 )
                               : current,
