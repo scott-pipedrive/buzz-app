@@ -1,7 +1,9 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { launchVisible, subscribeLaunch } from "../../app/launch";
-import { mountBraidHandoff } from "./braid-handoff";
+import { mountBraidHandoff, type CreateSpheresMerge } from "./braid-handoff";
 import styles from "./SpheresArtwork.module.css";
+
+const avatarModule = "/spheres-avatar-loader.js";
 
 export function SpheresWordmark() {
   return <span className={styles.wordmark}>Spheres</span>;
@@ -22,7 +24,26 @@ export function SpheresField({ waiting = false }: { waiting?: boolean }) {
       typeof ResizeObserver !== "function"
     )
       return;
-    return mountBraidHandoff(area, host);
+    let disposed = false;
+    let unmount: (() => void) | undefined;
+    void import(/* @vite-ignore */ avatarModule)
+      .then(
+        ({
+          createSpheresMerge,
+        }: {
+          createSpheresMerge: CreateSpheresMerge;
+        }) => {
+          if (!disposed)
+            unmount = mountBraidHandoff(area, host, createSpheresMerge);
+        },
+      )
+      .catch(() => {
+        // Artwork is decorative. Keep the welcome actions available.
+      });
+    return () => {
+      disposed = true;
+      unmount?.();
+    };
   }, [waiting, launching]);
   return (
     <div className={styles.field} aria-hidden="true">

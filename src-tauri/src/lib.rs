@@ -27,6 +27,8 @@ mod app_agents;
 mod decisions;
 mod deep_links;
 mod dock;
+#[cfg(target_os = "macos")]
+mod spheres_dock_icon;
 mod draft_diagnostics;
 mod huddle_window;
 use huddle_window::{
@@ -1030,6 +1032,10 @@ pub fn run() {
             }
             #[cfg(target_os = "macos")]
             notifications::macos::init();
+            #[cfg(target_os = "macos")]
+            if app.config().product_name.as_deref() == Some("Spheres") {
+                spheres_dock_icon::install();
+            }
             #[cfg(target_os = "macos")]
             mouse_nav::install(app.handle());
             #[cfg(target_os = "macos")]

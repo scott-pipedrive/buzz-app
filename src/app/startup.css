@@ -44,7 +44,25 @@
   height: 4.5rem;
 }
 
-/* Spheres uses the same CMY artwork in both appearance modes. */
+.spheres-launch-artwork {
+  display: grid;
+  width: 4.5rem;
+  height: 4.5rem;
+}
+
+.spheres-launch-artwork > * {
+  grid-area: 1 / 1;
+}
+
+.spheres-launch-artwork canvas {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.spheres-launch-artwork[data-spheres-avatar-playing] img {
+  visibility: hidden;
+}
 
 @media (prefers-reduced-motion: reduce) {
   #buzz-launch {
@@ -59,7 +77,8 @@ html[data-welcome-intro] {
 html[data-welcome-intro] .buzz-launch {
   background: transparent;
 }
-html[data-welcome-intro] .buzz-launch picture {
+html[data-welcome-intro] .buzz-launch picture,
+html[data-welcome-intro] .spheres-launch-artwork {
   visibility: hidden;
 }
 

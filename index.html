@@ -14,14 +14,15 @@
   </head>
   <body>
     <div id="buzz-launch" class="buzz-launch" role="status" aria-label="Opening Spheres">
-      <picture>
-        <source media="(prefers-reduced-motion: reduce)" srcset="/spheres-mark.svg" />
-        <img src="/spheres-loading-mark.svg" alt="Spheres" width="72" height="72" />
-      </picture>
+      <div class="spheres-launch-artwork" data-spheres-avatar-auto>
+        <img src="/spheres-avatar-poster.png" alt="Spheres" width="72" height="72" />
+        <canvas width="144" height="144" hidden aria-hidden="true"></canvas>
+      </div>
     </div>
     <div id="root" inert aria-hidden="true"></div>
     <div id="buzz-toast-root" inert aria-hidden="true"></div>
     <script src="/launch-init.js"></script>
+    <script type="module" src="/spheres-avatar-loader.js"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
