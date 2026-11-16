@@ -37,7 +37,7 @@ const hero = {
   display: "grid",
   alignItems: "end",
   textAlign: "center",
-  padding: "var(--space-8) var(--space-4) clamp(3rem, 8vw, 5rem)",
+  padding: "var(--space-8) var(--space-4) clamp(6.5rem, 10vw, 8.5rem)",
   borderRadius: "var(--radius-card, 1rem)",
   backgroundColor: "#f5ecde",
   backgroundImage: `radial-gradient(ellipse at center, #f8efe2dc, #eee2d2db), url(${paperGrain})`,
@@ -70,7 +70,6 @@ export function apply(ctx) {
   function SpheresHome() {
     const scene = useRef(null);
     const canvas = useRef(null);
-    const [replay, setReplay] = useState(0);
     const [staticArt, setStaticArt] = useState(false);
     const [notice, setNotice] = useState("");
 
@@ -89,7 +88,7 @@ export function apply(ctx) {
       }
       setStaticArt(!stop);
       return stop;
-    }, [replay]);
+    }, []);
 
     async function open(destination) {
       setNotice("");
@@ -126,34 +125,19 @@ export function apply(ctx) {
             },
           }),
         h(
-          "div",
+          "h1",
           {
+            id: "spheres-home-title",
             style: {
               position: "relative",
-              display: "grid",
-              justifyItems: "center",
-              gap: "var(--space-4)",
+              margin: 0,
+              fontSize: "clamp(2.6rem, 9vw, 5rem)",
+              fontWeight: 570,
+              lineHeight: 1,
+              letterSpacing: "-0.065em",
             },
           },
-          h(
-            "h1",
-            {
-              id: "spheres-home-title",
-              style: {
-                margin: 0,
-                fontSize: "clamp(2.6rem, 9vw, 5rem)",
-                fontWeight: 570,
-                lineHeight: 1,
-                letterSpacing: "-0.065em",
-              },
-            },
-            "Spheres",
-          ),
-          h(
-            "button",
-            { type: "button", onClick: () => setReplay((value) => value + 1) },
-            "Replay animation",
-          ),
+          "Spheres",
         ),
       ),
       h(
