@@ -2,9 +2,11 @@ import { createSpheresMerge } from "../../../public/spheres-avatar-loader.js";
 import paperGrain from "../../../public/spheres/paper-grain.png?inline";
 import poster from "../../../public/spheres-avatar-poster.png?inline";
 import { mountBraidHandoff } from "../../../src/features/identity/braid-handoff.ts";
+import { specialists } from "./specialists.js";
 
 export const inject = ["react", "pages", "navigation"];
 
+const agents = { label: "Agents", pluginId: "buzz.agents", pageId: "agents" };
 const gettingStarted = [
   {
     heading: "Start a conversation",
@@ -14,12 +16,10 @@ const gettingStarted = [
     pageId: "channels",
   },
   {
+    ...agents,
     heading: "Create your first agent",
     description:
       "Give your agent a name and tell it what you’d like help with.",
-    label: "Agents",
-    pluginId: "buzz.agents",
-    pageId: "agents",
   },
 ];
 
@@ -63,6 +63,15 @@ const card = {
   gridTemplateRows: "auto 1fr auto",
   justifyItems: "start",
 };
+const sectionHeader = {
+  display: "flex",
+  flexWrap: "wrap",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: "var(--space-2)",
+  marginBlockEnd: "var(--space-4)",
+};
+const noMargin = { margin: 0 };
 
 export function apply(ctx) {
   const { createElement: h, useEffect, useRef, useState } = ctx.react;
@@ -72,6 +81,7 @@ export function apply(ctx) {
     const canvas = useRef(null);
     const [staticArt, setStaticArt] = useState(false);
     const [notice, setNotice] = useState("");
+    const [copyResult, setCopyResult] = useState(null);
 
     useEffect(() => {
       let stop;
@@ -102,6 +112,15 @@ export function apply(ctx) {
         setNotice(
           `${destination.label} could not open. Check that it’s enabled in Settings → Plugins.`,
         );
+      }
+    }
+
+    async function copyInstructions(role) {
+      try {
+        await navigator.clipboard.writeText(role.instructions);
+        setCopyResult({ title: role.title, copied: true });
+      } catch {
+        setCopyResult({ title: role.title, copied: false });
       }
     }
 
@@ -155,6 +174,59 @@ export function apply(ctx) {
               `Open ${destination.label}`,
             ),
           ),
+        ),
+      ),
+      h(
+        "section",
+        { "aria-labelledby": "spheres-home-specialists" },
+        h(
+          "header",
+          { style: sectionHeader },
+          h(
+            "h2",
+            { id: "spheres-home-specialists", style: noMargin },
+            "Specialists",
+          ),
+          h(
+            "button",
+            { type: "button", onClick: () => void open(agents) },
+            "Open Agents",
+          ),
+        ),
+        h(
+          "div",
+          { style: cards },
+          specialists.map((role) => {
+            const result = copyResult?.title === role.title ? copyResult : null;
+            const label = result?.copied ? "Copied" : "Copy instructions";
+            return h(
+              "article",
+              { key: role.title, className: "ui-card", style: card },
+              h("h3", { style: noMargin }, role.title),
+              h("p", { style: noMargin }, role.sample),
+              h(
+                "button",
+                {
+                  type: "button",
+                  "aria-label": `${label} for ${role.title}`,
+                  onClick: () => void copyInstructions(role),
+                },
+                h("span", { "aria-live": "polite" }, label),
+              ),
+              result?.copied === false &&
+                h(
+                  "label",
+                  { style: { width: "100%" } },
+                  "Select and copy these instructions",
+                  h("textarea", {
+                    readOnly: true,
+                    rows: 5,
+                    value: role.instructions,
+                    style: { display: "block", width: "100%" },
+                  }),
+                ),
+            );
+          }),
         ),
       ),
       notice && h("p", { role: "status", style: { margin: 0 } }, notice),

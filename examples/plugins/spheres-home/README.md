@@ -1,8 +1,11 @@
 # Spheres Home
 
 Spheres Home adds a plugin page with the Spheres welcome animation and links to
-the built-in Messages and Agents pages. The plugin bundles the existing avatar
-renderer and paper artwork in a single module.
+the built-in Messages and Agents pages. Its specialist cards give sample requests
+and copyable starter instructions for Marketing, Sales, Finance, Customer
+Support, and Data. Open Agents to paste those instructions into a Codex agent's
+Identity settings. The plugin bundles the existing avatar renderer and paper
+artwork in a single module.
 
 Run this from the repository root to build the installable folder.
 
