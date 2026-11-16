@@ -19,6 +19,12 @@ community settings, and native integrations before shipping a Buzz upgrade.
 Bump `version` in `src-tauri/tauri.spheres.conf.json` after the desktop changes are
 ready. Spheres uses its own version numbers.
 
+For a notarised release, set `APPLE_SIGNING_IDENTITY` to the Developer ID
+Application identity in your Mac’s Keychain and `SPHERES_NOTARY_PROFILE` to the
+profile saved with `xcrun notarytool store-credentials`. The build saves Apple’s
+submission ID and result in the release directory and staples the accepted ticket
+before creating the website ZIP and signed updater archive.
+
 Set the deployment values in your local shell before running `ship` or `publish`.
 Use the host with the existing Caddy routes, the directory serving the Spheres
 pages, and the staging directory that holds `publish.lock`. SSH uses your

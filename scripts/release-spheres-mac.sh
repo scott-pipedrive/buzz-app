@@ -14,6 +14,10 @@ key=${TAURI_SIGNING_PRIVATE_KEY_PATH:-"$HOME/Library/Application Support/Spheres
 version=$(/usr/bin/plutil -extract version raw -o - "$product")
 public_key=$(/usr/bin/plutil -extract plugins.updater.pubkey raw -o - "$config")
 endpoint=$(/usr/bin/plutil -extract plugins.updater.endpoints.0 raw -o - "$config")
+if [[ -n "${SPHERES_NOTARY_PROFILE:-}" && -z "${APPLE_SIGNING_IDENTITY:-}" ]]; then
+  printf 'Set APPLE_SIGNING_IDENTITY to a Developer ID Application identity when using SPHERES_NOTARY_PROFILE.\n' >&2
+  exit 1
+fi
 if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ || ! -s "$key" || ! -s "$key.pub" || $(<"$key.pub") != "$public_key" ]]; then
   printf 'Expected a release version and the matching Spheres updater keypair.\n' >&2
   exit 1
@@ -45,6 +49,29 @@ if [[ -z "${APPLE_SIGNING_IDENTITY:-}" ]]; then
     --entitlements "$repo/src-tauri/entitlements.plist" -r "=designated => $requirement" "$app"
   /usr/bin/codesign --verify --strict -R "=$requirement" "$app"
 else
+  if [[ -n "${SPHERES_NOTARY_PROFILE:-}" ]] && ! /usr/bin/xcrun stapler validate "$app" >/dev/null 2>&1; then
+    # Tauri copies these Mach-O helpers as resources without signing them.
+    for helper in "$app"/Contents/Resources/bin/*; do
+      [[ -f "$helper" && $(/usr/bin/file -b "$helper") == Mach-O* ]] || continue
+      /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp "$helper"
+    done
+    /usr/bin/codesign --force --sign "$APPLE_SIGNING_IDENTITY" --options runtime --timestamp \
+      --entitlements "$repo/src-tauri/entitlements.plist" "$app"
+    /usr/bin/codesign --verify --deep --strict "$app"
+    submission="$output/notary-upload.zip"
+    /usr/bin/ditto -c -k --keepParent "$app" "$submission"
+    /usr/bin/xcrun notarytool submit "$submission" --keychain-profile "$SPHERES_NOTARY_PROFILE" \
+      --output-format json > "$output/notary-submission.json"
+    submission_id=$(/usr/bin/plutil -extract id raw -o - "$output/notary-submission.json")
+    printf 'Submitted Spheres %s to Apple as %s\n' "$version" "$submission_id"
+    /usr/bin/xcrun notarytool wait "$submission_id" --keychain-profile "$SPHERES_NOTARY_PROFILE" \
+      --output-format json > "$output/notary-result.json"
+    if [[ $(/usr/bin/plutil -extract status raw -o - "$output/notary-result.json") != Accepted ]]; then
+      printf 'Apple did not accept the notarisation submission. See %s/notary-result.json.\n' "$output" >&2
+      exit 1
+    fi
+    /usr/bin/xcrun stapler staple "$app"
+  fi
   /usr/bin/xcrun stapler validate "$app"
 fi
 /usr/bin/codesign --verify --deep --strict "$app"
