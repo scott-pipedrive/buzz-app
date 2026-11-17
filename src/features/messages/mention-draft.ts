@@ -4,7 +4,12 @@ import {
   readComposerSnapshot,
 } from "./composer-document";
 
-export type MentionRecipient = Readonly<{ pubkey: string; name: string }>;
+export type MentionRecipient = Readonly<{
+  pubkey: string;
+  name: string;
+  /** Host-owned team selection bound to this mention. */
+  team?: string;
+}>;
 export type DraftRecipient = MentionRecipient &
   Readonly<{ start: number; end: number }>;
 // Serializable draft metadata must not expose editor implementation types to plugins.
@@ -102,9 +107,13 @@ export function mentionDraft(value: unknown): MentionDraft {
         }
       : {}),
     ...(doc ? { document: document as ComposerSnapshot } : {}),
-    recipients: safe
-      .slice(0, 32)
-      .map(({ pubkey, name, start, end }) => ({ pubkey, name, start, end })),
+    recipients: safe.slice(0, 32).map(({ pubkey, name, start, end, team }) => ({
+      pubkey,
+      name,
+      start,
+      end,
+      ...(typeof team === "string" && team.length <= 2400 ? { team } : {}),
+    })),
   };
 }
 /** What counts as a draft everywhere: text, an attached chat or GIF, or `files`.

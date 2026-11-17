@@ -325,6 +325,7 @@ export function revertTemplate(
     content = JSON.stringify({
       ...parse(target.content),
       name: parse(base.content)?.name,
+      lead: parse(base.content)?.lead,
     });
   const template = artifactTemplate({
     ...expected,

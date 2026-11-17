@@ -21,7 +21,13 @@ const INVALID: &str = "Enter a valid nsec private key";
 const MALFORMED: &str = "Saved identity is malformed; nothing was changed. Keep your key backup and contact support before changing secure storage.";
 // Keyring only. Not MALFORMED: deleting refuses too, so removing the key can't work here.
 #[cfg(not(test))]
-const AMBIGUOUS: &str = concat!("More than one saved identity matches in secure storage, so ", env!("BUZZ_DISPLAY_NAME"), " can't tell which to use; nothing was changed. Remove the extra ", env!("BUZZ_DISPLAY_NAME"), " entries with your keyring app, then retry.");
+const AMBIGUOUS: &str = concat!(
+    "More than one saved identity matches in secure storage, so ",
+    env!("BUZZ_DISPLAY_NAME"),
+    " can't tell which to use; nothing was changed. Remove the extra ",
+    env!("BUZZ_DISPLAY_NAME"),
+    " entries with your keyring app, then retry."
+);
 
 // Batch-local conversation keys avoid repeating ECDH for every self-encrypted slot.
 // Callers enforce their encoded-payload budget before reaching this helper.
@@ -246,13 +252,18 @@ mod platform {
     fn delete(service: &str) -> Result<()> {
         match credentials::delete(service, credentials::HUMAN_ACCOUNT) {
             Ok(()) | Err(credentials::Error::Absent) => Ok(()),
-            Err(credentials::Error::Busy) => {
-                Err(concat!("Another ", env!("BUZZ_DISPLAY_NAME"), " app is accessing secure storage. Retry shortly.").into())
-            }
-            Err(credentials::Error::Denied) => Err(
-                concat!("Keychain access was denied. Allow access and open ", env!("BUZZ_DISPLAY_NAME"), " again to finish signing out.")
-                    .into(),
-            ),
+            Err(credentials::Error::Busy) => Err(concat!(
+                "Another ",
+                env!("BUZZ_DISPLAY_NAME"),
+                " app is accessing secure storage. Retry shortly."
+            )
+            .into()),
+            Err(credentials::Error::Denied) => Err(concat!(
+                "Keychain access was denied. Allow access and open ",
+                env!("BUZZ_DISPLAY_NAME"),
+                " again to finish signing out."
+            )
+            .into()),
             Err(_) => Err(
                 "Your identity could not be accessed in Keychain. Retry without changing keys."
                     .into(),
@@ -420,7 +431,13 @@ impl Identity {
         let key = match self.legacy.take() {
             Some(key) => key,
             None => Key::parse(self.store.legacy().map_err(|error| error.message)?.trim())
-                .map_err(|_| concat!("The earlier ", env!("BUZZ_DISPLAY_NAME"), " app's identity is malformed; nothing was changed"))?,
+                .map_err(|_| {
+                    concat!(
+                        "The earlier ",
+                        env!("BUZZ_DISPLAY_NAME"),
+                        " app's identity is malformed; nothing was changed"
+                    )
+                })?,
         };
         if let Some(expected) = expected {
             if key.viewer()? != expected {
@@ -1243,8 +1260,9 @@ pub struct BuilderlabChallenge {
 }
 impl BuilderlabChallenge {
     /// block/buzz's `nostr_bind` checks and kind 24243 tags, pinned to production
-    /// Builderlab or the `BUZZ_BUILDERLAB_URL` build origin; never another origin.
-    fn template(self, now: u64, configured: &str) -> Result<EventTemplate> {
+    /// Builderlab or a configured origin (the `BUZZ_BUILDERLAB_URL` build origin,
+    /// each sign-in server's identity origin); never another origin.
+    fn template(self, now: u64, configured: &[String]) -> Result<EventTemplate> {
         let nonce_ok = self.nonce.len() == 43
             && self
                 .nonce
@@ -1258,8 +1276,7 @@ impl BuilderlabChallenge {
             || !nonce_ok
             || self.verification_code.len() != 6
             || !self.verification_code.bytes().all(|b| b.is_ascii_digit())
-            || (self.origin != BUILDERLAB_ORIGIN
-                && (configured.is_empty() || self.origin != configured))
+            || (self.origin != BUILDERLAB_ORIGIN && !configured.contains(&self.origin))
             || expires <= i64::try_from(now).unwrap_or(i64::MAX)
         {
             return Err("Invalid Nostr identity challenge".into());
@@ -1289,6 +1306,7 @@ impl BuilderlabChallenge {
 #[tauri::command]
 pub async fn identity_sign_builderlab_binding(
     host: tauri::State<'_, IdentityHost>,
+    federated_identity: tauri::State<'_, crate::federated_identity::FederatedIdentity>,
     challenge: BuilderlabChallenge,
     legacy: Option<bool>,
 ) -> Result<serde_json::Value> {
@@ -1296,7 +1314,11 @@ pub async fn identity_sign_builderlab_binding(
         .duration_since(std::time::UNIX_EPOCH)
         .map_err(|_| "System clock is before 1970")?
         .as_secs();
-    let event = challenge.template(now, buzzodz_plugins::BUILDERLAB_ORIGIN)?;
+    let mut configured = federated_identity.identity_origins();
+    if !buzzodz_plugins::BUILDERLAB_ORIGIN.is_empty() {
+        configured.push(buzzodz_plugins::BUILDERLAB_ORIGIN.into());
+    }
+    let event = challenge.template(now, &configured)?;
     if legacy == Some(true) {
         with_identity(host.inner().clone(), move |identity| {
             identity

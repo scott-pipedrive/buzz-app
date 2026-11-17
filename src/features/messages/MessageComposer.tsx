@@ -148,6 +148,11 @@ import {
 } from "./mention-draft";
 import { useShowingDraft } from "./draft-places";
 import { normalizeName } from "../search/person-match";
+import {
+  mentionableTeams,
+  teamMentionKey,
+  teamMentionMembers,
+} from "../agents/visible-teams";
 import { ComposerAccessories } from "../conversation/ComposerAccessories";
 import { ComposerTools } from "../conversation/ComposerTools";
 import { ComposerLinkDialog } from "./ComposerLinkDialog";
@@ -1206,13 +1211,12 @@ function Composer({
   const addressedKeys = sessionTargets(addressed.map((item) => item.pubkey));
   const sessionState = useSessionState(agents, addressedKeys, sessionPlace);
   const compacting = sessionState === "compacting";
-  // In a saved chat, the viewer's own pick outlives a remount until the next
-  // send, which the chat's history then seeds from. A new chat always starts
-  // from the main agent, unless a refused start gave its pick back (SoloDraft
-  // saves that one) and the viewer has not picked since.
+  // An explicit pick stays with its draft across remounts. Saved chats clear
+  // it on send and then seed from history; SoloDraft consumes it when a new
+  // chat starts.
   const pillKey = `${draftKey}:agents`;
   const keepPick = (people: readonly MentionRecipient[] | null) => {
-    writeView(scope, pillKey, !submission && people?.length ? people : null);
+    writeView(scope, pillKey, people?.length ? people : null);
   };
   const choose = (people: readonly MentionRecipient[]) => {
     seededRoute.current = undefined;
@@ -2029,10 +2033,10 @@ function Composer({
   );
   function insertMention(recipient: MentionRecipient) {
     if (!wellFormedRecipient(recipient)) return false;
-    if (!solo || editing.target)
-      return insert(`@${recipient.name} `, recipient);
+    const { pubkey, name } = recipient;
+    if (!solo || editing.target) return insert(`@${name} `, { pubkey, name });
     return keepProseCaret((at) =>
-      insert(`@${recipient.name} `, recipient, at, undefined, false),
+      insert(`@${name} `, { pubkey, name }, at, undefined, false),
     );
   }
   /** Solo chats address agents up front: a picked tag joins the leading tags,
@@ -2063,6 +2067,7 @@ function Composer({
   function insertMentions(
     recipients: readonly MentionRecipient[],
     range?: CompletionQuery,
+    teamId?: string,
   ) {
     if (
       !Array.isArray(recipients) ||
@@ -2077,8 +2082,10 @@ function Composer({
       )
     )
       return false;
-    const unique = [
-      ...new Map(recipients.map((person) => [person.pubkey, person])).values(),
+    const unique: MentionRecipient[] = [
+      ...new Map(
+        recipients.map(({ pubkey, name }) => [pubkey, { pubkey, name }]),
+      ).values(),
     ];
     if (unique.length > 32) {
       setError("Choose at most 32 recipients");
@@ -2101,12 +2108,27 @@ function Composer({
         range,
       );
     const admitted = admits();
-    if (unique.some((person) => !admitted(person.pubkey))) {
+    const team =
+      teamId === undefined
+        ? undefined
+        : mentionableTeams(agents, scope).find((team) => team.id === teamId);
+    if (
+      unique.some((person) => !admitted(person.pubkey)) ||
+      (teamId !== undefined &&
+        (!team?.lead ||
+          unique.length !== 1 ||
+          team.lead !== unique[0]?.pubkey ||
+          !team.members.includes(team.lead) ||
+          team.members.length > 32 ||
+          team.members.some((key) => !admitted(key))))
+    ) {
       setError(
         "A team member is no longer available. Refresh choices before trying again.",
       );
       return false;
     }
+    if (team && unique[0])
+      unique[0] = { ...unique[0], team: teamMentionKey(team) };
     const text = unique.map((person) => `@${person.name} `).join("");
     if (
       !(solo && !range
@@ -2148,7 +2170,9 @@ function Composer({
     )
       return false;
     const unique = [
-      ...new Map(recipients.map((person) => [person.pubkey, person])).values(),
+      ...new Map(
+        recipients.map(({ pubkey, name }) => [pubkey, { pubkey, name }]),
+      ).values(),
     ];
     const admitted = admits();
     if (unique.length > 32 || unique.some((person) => !admitted(person.pubkey)))
@@ -2226,7 +2250,7 @@ function Composer({
       return true;
     }
     if ("mentions" in edit && edit.mentions)
-      return insertMentions(edit.mentions, query);
+      return insertMentions(edit.mentions, query, edit.teamId);
     if ("mention" in edit && edit.mention)
       return insert(`@${edit.mention.name} `, edit.mention, query, typed);
     if ("token" in edit && edit.token) {
@@ -2502,7 +2526,8 @@ function Composer({
     !value.pending?.length;
   async function prepareRecipients(
     explicit: readonly string[],
-    fromPill = false,
+    fromPill: boolean,
+    teamWorkers: () => readonly string[],
   ) {
     const channel = await session.channelWrites.refreshMembership(channelId);
     if (!currentAdmission())
@@ -2539,12 +2564,16 @@ function Composer({
       )
         throw new Error("Tag an agent to send.");
     }
-    const missing = recipients.filter((key) => !channel.members?.includes(key));
+    const members = new Set([...recipients, ...teamWorkers()]);
+    const missing = [...members].filter(
+      (key) => !channel.members?.includes(key),
+    );
     if (missing.length) {
       // Classification no longer depends on inventory; refresh before admission.
       await session.agentChoices.refresh();
       if (!currentAdmission())
         throw new Error("The session changed. Review its channel and retry.");
+      teamWorkers();
       if (
         missing.some(
           (key) =>
@@ -2556,13 +2585,14 @@ function Composer({
         throw new Error(
           "Tag a person already in this chat or one of your available agents.",
         );
-      await session.channelWrites.addAgents(
-        channelId,
-        missing,
-        currentAdmission,
-      );
+      await session.channelWrites.addAgents(channelId, missing, () => {
+        if (!currentAdmission()) return false;
+        teamWorkers();
+        return true;
+      });
       if (!currentAdmission())
         throw new Error("The session changed. Review its channel and retry.");
+      teamWorkers();
     }
     return recipients;
   }
@@ -2814,6 +2844,19 @@ function Composer({
       const bringable = new Set(
         (agents?.joinable() ?? []).map((agent) => agent.pubkey),
       );
+      const teamWorkers = () => {
+        if (
+          valueRef.current !== captured &&
+          captured.recipients.some(({ team }) => team !== undefined)
+        )
+          throw new Error("The draft changed. Review it before sending.");
+        const workers = teamMentionMembers(agents, scope, captured.recipients);
+        if (workers.some((key) => agentUnavailable(session, key, bringable)))
+          throw new Error(
+            "A team member is unavailable. Review the team before sending.",
+          );
+        return workers;
+      };
       if (
         capturedRecipients.some((p) =>
           agentUnavailable(session, p.pubkey, bringable),
@@ -2858,8 +2901,20 @@ function Composer({
         recipients = await prepareRecipients(
           recipients,
           routing && !captured.recipients.length,
+          teamWorkers,
         );
       } else if (recipients.length) {
+        const workers = teamWorkers();
+        if (workers.length) {
+          const channel =
+            await session.channelWrites.refreshMembership(channelId);
+          if (teamWorkers().some((key) => !channel.members?.includes(key)))
+            throw new Error(
+              "Add the other team members to this conversation before sending.",
+            );
+          attempt.signal.throwIfAborted();
+          if (valueRef.current !== captured || !permitted.current) return;
+        }
         // An agent only an earlier Buzz runs would not answer; offer it here first.
         const lookup = oldAgents.find(captured.recipients);
         const old = lookup instanceof Promise ? await lookup : lookup;
@@ -3817,7 +3872,9 @@ function Composer({
                     audience={audience}
                     insertText={insertToolText}
                     insertMention={insertMention}
-                    insertMentions={insertMentions}
+                    insertMentions={(recipients, teamId) =>
+                      insertMentions(recipients, undefined, teamId)
+                    }
                     replaceRecipients={replaceRecipients}
                     replaceRecipientsIfEmpty={replaceRecipientsIfEmpty}
                     insertResource={insertResource}

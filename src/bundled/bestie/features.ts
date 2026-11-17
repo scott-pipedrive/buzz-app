@@ -28,7 +28,7 @@ export const memory: Feature = {
   id: "memory",
   title: "Remembers you",
   description:
-    "Adds memory rules to Bestie's instructions. Off removes them. Nothing Bestie remembered is deleted, and its core memory still goes into every prompt. Clear memory in the Memory tab.",
+    "Adds memory rules to Bestie's instructions. Off removes them. Nothing Bestie remembered is deleted, and its core memory still goes into every prompt. To clear a memory, ask Bestie to forget it.",
   version: 1,
   text: `# Memory
 Your owner turned on "Remembers you": keep memory about them, so your help gets better over time. That is their approval to save what they tell you by these rules; still ask before you change or remove something they told you before. Call mem_get mem/user when the answer depends on who the owner is or what they asked for before. Save only what will improve future help, and say something is saved only after the tool confirms it.
@@ -54,8 +54,7 @@ Rules:
 export const checkinHourly: Feature = {
   id: "checkin.hourly",
   title: "Every hour",
-  description:
-    `Bestie wakes once an hour to tidy its memory and tell you only what matters. Runs while ${appName()} is open and the Watching plugin is on. Each wake uses your tokens. Turning this on also runs Bestie's other watches.`,
+  description: `Bestie wakes once an hour to tidy its memory and tell you only what matters. Runs while ${appName()} is open and the Watching plugin is on. Each wake uses your tokens. Turning this on also runs Bestie's other watches.`,
   version: 1,
   requires: "memory",
   timer: {

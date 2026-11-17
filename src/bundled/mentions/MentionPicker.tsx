@@ -132,14 +132,18 @@ export function MentionPicker({
     }
   };
   const chooseTeam = (team: (typeof teams.choices)[number]) => {
-    if (audience) {
+    if (audience && !team.teamId) {
       if (!team.canSelect() || !team.recipients.length) return;
       audience.only(team.recipients);
       accepted.current = true;
       setOpen(false);
       return;
     }
-    if (team.canSelect() && selectTeam?.(team.recipients)) {
+    if (!team.canSelect()) return;
+    const selected = team.teamId
+      ? selectTeam?.(team.targets, team.teamId)
+      : selectTeam?.(team.recipients);
+    if (selected) {
       accepted.current = true;
       setOpen(false);
     }

@@ -129,7 +129,7 @@ export const composerSchema = new Schema<
   },
   marks: {
     recipient: {
-      attrs: { pubkey: {}, name: {} },
+      attrs: { pubkey: {}, name: {}, team: { default: null } },
       inclusive: false,
       toDOM: () => ["span", 0],
     },
@@ -470,6 +470,7 @@ function project(doc: EditorNode) {
         recipients.push({
           pubkey: identity.attrs.pubkey,
           name: identity.attrs.name,
+          ...(identity.attrs.team && { team: identity.attrs.team }),
           start,
           end: text.length,
         });

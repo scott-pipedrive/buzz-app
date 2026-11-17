@@ -17,7 +17,9 @@ import {
   parseChatSetup,
   type ChatSetup,
 } from "./workspace";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { AgentsContext } from "../agents/react";
+import { teamMentionMembers } from "../agents/visible-teams";
 import type { RelaySession } from "../relay/session";
 import {
   readView,
@@ -104,10 +106,18 @@ export function resetNewChatProject(scope: string, projectId: string) {
   writeView(scope, `${key}:new-project`, null);
 }
 
-/** New chats share one saved draft. When it holds only tags for agents
- * other than the named one, it has no text of the person's to keep. */
-function dropOtherAgentTag(scope: string, key: string, agent?: string) {
+/** New can return typing to an open draft without replacing its editor. */
+export function soloDraftInput() {
+  return document.querySelector<HTMLElement>(
+    '#new-chat-prompt textarea, #new-chat-prompt [role="textbox"]',
+  );
+}
+
+/** A named route replaces earlier toolbar picks and legacy tag-only defaults,
+ * while authored inline mentions remain part of the person's draft. */
+function prepareNamedAgentDraft(scope: string, key: string, agent?: string) {
   if (!agent) return;
+  writeView(scope, `${key}:agents`, null);
   const saved = mentionDraft(readView<unknown>(scope, key, ""));
   if (
     addressingOnly(saved) &&
@@ -171,6 +181,8 @@ const openNewChats = new Set<{
 const restoredPrompts = new Map<string, string>();
 const REGION_UNAVAILABLE =
   "This chat's plugin is unavailable. Your draft is saved.";
+// Allow async local preparation without leaving Send stuck on a plugin.
+const PREPARE_START_TIMEOUT_MS = 3_000;
 
 export function SoloDraft({
   session,
@@ -210,6 +222,7 @@ export function SoloDraft({
     | undefined;
   projectId?: string | undefined;
 }) {
+  const agents = useContext(AgentsContext);
   const draftKey = region
     ? regionDraftKey(region, projectId, regionDraft?.key)
     : linkedId
@@ -218,9 +231,8 @@ export function SoloDraft({
         ? `solo:project:${projectId}`
         : "solo";
   const notify = useToastNotification();
-  // Before the composer reads it: a named agent replaces a saved draft that
-  // only tags another agent, since that tag was the earlier default.
-  useState(() => dropOtherAgentTag(scope, `${draftKey}:new-draft`, agent));
+  // Reconcile explicit route intent before the composer restores its pick.
+  useState(() => prepareNamedAgentDraft(scope, `${draftKey}:new-draft`, agent));
   // Read the source live: starting the chat consumes it.
   const linkedSource = useCallback(
     () => (source ? readLinkedChat(scope, draftKey)?.link : undefined),
@@ -408,8 +420,13 @@ export function SoloDraft({
           }),
           canvas,
         });
-      // The workspace's agents join in the create with the tagged ones.
-      const members = [...new Set([...recipients, ...(setup?.agents ?? [])])];
+      const teamWorkers = () =>
+        teamMentionMembers(agents, scope, draft.recipients);
+      // Workspace agents and selected teams' workers join on create. Only the
+      // explicitly addressed recipients receive the first message.
+      const members = [
+        ...new Set([...recipients, ...(setup?.agents ?? []), ...teamWorkers()]),
+      ];
       // The agents already listed decide at once; only an unknown one waits
       // for a fresh list.
       const selectable = () =>
@@ -434,31 +451,40 @@ export function SoloDraft({
         if (region && !current) throw new Error(REGION_UNAVAILABLE);
         return current;
       };
-      const eligible = regionOwner();
-      const accepts = eligible?.source.draftAgent;
-      if (
-        eligible &&
-        accepts &&
-        members.some((key) => !accepts(eligible.binding, key))
-      )
-        throw new Error(
-          "This chat's plugin can't use one of these agents. Choose another agent.",
-        );
+      const checkRegionAgents = (owner: ReturnType<typeof regionOwner>) => {
+        const accepts = owner?.source.draftAgent;
+        if (
+          owner &&
+          accepts &&
+          members.some((key) => !accepts(owner.binding, key))
+        )
+          throw new Error(
+            "This chat's plugin can't use one of these agents. Choose another agent.",
+          );
+      };
+      const checkTeam = () => {
+        if (!draft.recipients.some(({ team }) => team !== undefined)) return;
+        teamWorkers();
+        if (!selectable())
+          throw new Error(
+            "A team member is unavailable. Review the team before sending.",
+          );
+      };
+      checkRegionAgents(regionOwner());
       // Finish uploads before anything is created, so a failed file blocks
       // the start instead of leaving an empty chat behind.
       const uploaded = await files.prepareForSend(new AbortController().signal);
       if (!mounted.current) return;
-      regionOwner();
+      checkRegionAgents(regionOwner());
+      checkTeam();
       // The region's source finds how its chat started, even after a restart.
       const startKey = region ? regionStartKey(channelId) : undefined;
-      if (
-        startKey &&
-        !writeView(scope, startKey, {
-          region,
-          ...(regionDraft ? { draft: regionDraft } : {}),
-          ...(project ? { workspace: project } : {}),
-        })
-      )
+      const startRecord = {
+        ...(region ? { region } : {}),
+        ...(regionDraft ? { draft: regionDraft } : {}),
+        ...(project ? { workspace: project } : {}),
+      };
+      if (startKey && !writeView(scope, startKey, startRecord))
         throw new Error(
           "This chat couldn't be saved on this device. Your draft is kept.",
         );
@@ -476,6 +502,46 @@ export function SoloDraft({
           );
       let starting: ReturnType<typeof session.channelWrites.start>;
       try {
+        const owner = regionOwner();
+        if (owner?.source.prepareStart) {
+          let timeout: ReturnType<typeof setTimeout> | undefined;
+          try {
+            await Promise.race([
+              Promise.resolve(
+                owner.source.prepareStart(owner.binding, {
+                  channelId,
+                  members,
+                  start: {
+                    ...(project ? { workspace: project } : {}),
+                    draft: regionDraft ?? { context: { saved: startRecord } },
+                  },
+                }),
+              ),
+              new Promise<never>((_resolve, reject) => {
+                timeout = setTimeout(
+                  () => reject(new Error("Solo region preparation timed out")),
+                  PREPARE_START_TIMEOUT_MS,
+                );
+              }),
+            ]);
+          } catch (reason) {
+            console.warn("Solo region could not prepare its chat", reason);
+          } finally {
+            clearTimeout(timeout);
+          }
+          if (!mounted.current) {
+            if (startKey) writeView(scope, startKey, null);
+            return;
+          }
+          const current = regionOwner();
+          if (
+            current?.source !== owner.source ||
+            current?.binding !== owner.binding
+          )
+            throw new Error(REGION_UNAVAILABLE);
+          checkRegionAgents(current);
+          checkTeam();
+        }
         starting = session.channelWrites.start(
           channelId,
           name,

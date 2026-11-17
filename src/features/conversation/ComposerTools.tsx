@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from "react";
 import type { Contribution } from "../../plugins/contributions";
+import { isBundledContribution } from "../../plugins/provenance";
 import type {
   ComposerTool,
   ComposerToolProps,
@@ -105,8 +106,14 @@ function OwnedTool({
         active() ? current.current.insertText(text) : false,
       insertMention: (recipient) =>
         active() ? current.current.insertMention(recipient) : false,
-      insertMentions: (recipients) =>
-        active() ? current.current.insertMentions(recipients) : false,
+      insertMentions: (recipients, teamId) => {
+        if (!active()) return false;
+        return teamId &&
+          tool.pluginId === "buzz.mentions" &&
+          isBundledContribution(tool)
+          ? current.current.insertMentions(recipients, teamId)
+          : current.current.insertMentions(recipients);
+      },
       replaceRecipients: (recipients) =>
         active() ? current.current.replaceRecipients(recipients) : false,
       replaceRecipientsIfEmpty: (recipients) =>

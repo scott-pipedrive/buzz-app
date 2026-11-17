@@ -1,3 +1,5 @@
+import { AISettingsIcon } from "../../features/agents/AISettings";
+import { candidatesFor, onAutomatic } from "../../features/agents/recommended";
 import { visibleTeams } from "../../features/agents/visible-teams";
 import { appName, legacyAppName, previousAppName } from "../../shared/app-name";
 import { profileKey } from "../../features/profiles/target";
@@ -42,6 +44,7 @@ import styles from "./AgentsPage.module.css";
 import cardStyles from "./AgentCard.module.css";
 import {
   AgentBrowse,
+  NoImportTypes,
   SharedAgentPanel,
   type SharedAgentSelection,
   SharedImportDialog,
@@ -124,6 +127,7 @@ import {
   MenuTrigger,
 } from "../../shared/design-system/ui/Menu";
 import { PanelHeader } from "../../shared/design-system/ui/PanelHeader";
+import { Select } from "../../shared/design-system/ui/Select";
 import { SplitButton } from "../../shared/design-system/ui/SplitButton";
 import { Tabs } from "../../shared/design-system/ui/Tabs";
 import { Textarea } from "../../shared/design-system/ui/Textarea";
@@ -968,6 +972,7 @@ export function AgentsPage({
                         onImported={leaveListing}
                         // Stays on the listing if an unsaved draft is kept.
                         onOpen={(agent) => browse(agent.pubkey, leaveListing)}
+                        openSettings={openSettings}
                       />
                     ),
                   },
@@ -1030,6 +1035,16 @@ export function AgentsPage({
               flow === "import" ? () => changeTab("yours") : returnTo("teams")
             }
             onPendingChange={setImporting}
+            // Settings opens in place of the dialog, not over it, so while
+            // an import keeps the dialog open the link is plain text.
+            openSettings={
+              openSettings && !importing
+                ? (section) => {
+                    setFlow(undefined);
+                    openSettings(section);
+                  }
+                : undefined
+            }
           />
         </Dialog>
       )}
@@ -1074,6 +1089,7 @@ export function AgentsPage({
             changeTab("yours");
             build(agent.pubkey);
           }}
+          openSettings={openSettings}
         />
       )}
       {card && (
@@ -1485,6 +1501,18 @@ function InventoryCard({
   const [sharing, setSharing] = useState(false);
   const editable = agent.place !== "elsewhere" && !agent.unfinished;
   const Model = editable ? type?.CreateModel : undefined;
+  const automatic =
+    !!type && !type.remote && onAutomatic(agent.config, type.id);
+  const summary = summaryOf(agent, type);
+  const modelLabel =
+    automatic && type
+      ? (candidatesFor(type.id).find(
+          (candidate) =>
+            summary === candidate.model ||
+            summary ===
+              [candidate.provider, candidate.model].filter(Boolean).join(" · "),
+        )?.label ?? summary)
+      : summary;
   const save = async (config: unknown) => {
     setSaving(true);
     setError("");
@@ -1547,8 +1575,22 @@ function InventoryCard({
       card={
         <AgentCard
           {...props}
-          icon={Model ? undefined : props.icon}
-          detail={Model ? undefined : props.detail}
+          icon={
+            automatic ? (
+              <span className="inline-flex text-primary">
+                <AISettingsIcon automatic harnessIcon={type?.icon} compact />
+              </span>
+            ) : Model ? undefined : (
+              props.icon
+            )
+          }
+          detail={
+            automatic ? (
+              <span className="text-primary">{modelLabel} (Automatic)</span>
+            ) : Model ? undefined : (
+              props.detail
+            )
+          }
           menu={
             <MenuRoot>
               <MenuTrigger
@@ -1565,12 +1607,12 @@ function InventoryCard({
             </MenuRoot>
           }
         >
-          {(Model || error) && (
+          {((Model && !automatic) || error) && (
             <div
               data-card-control=""
               className="flex min-w-0 max-w-full flex-col items-center gap-2"
             >
-              {Model && (
+              {Model && !automatic && (
                 <Model
                   agent={agent}
                   openSettings={onBuild}
@@ -1831,6 +1873,7 @@ function ImportAgents({
   only,
   onImported,
   onPendingChange,
+  openSettings,
 }: {
   agents: Agents;
   community: string | undefined;
@@ -1841,6 +1884,7 @@ function ImportAgents({
   only: "agents" | "teams";
   onImported(): void;
   onPendingChange(pending: boolean): void;
+  openSettings: ((section: string) => void) | undefined;
 }) {
   const [found, setFound] = useState<FoundAgents>();
   const [confirming, setConfirming] = useState<SharedImport>();
@@ -2033,11 +2077,7 @@ function ImportAgents({
     });
   }, [agents, snapshot]);
   if (!types.length)
-    return (
-      <p className="m-0 text-body-sm text-secondary">
-        Enable an agent type plugin to import agents.
-      </p>
-    );
+    return <NoImportTypes agents={agents} openSettings={openSettings} />;
   const elsewhere = only === "agents" ? offered : [];
   const teamsElsewhere =
     only === "teams" ? teamsToJoin(snapshot.teams, agents.joinable()) : [];
@@ -2084,11 +2124,11 @@ function ImportAgents({
       ))}
       {old.length > 0 && (
         <p className="m-0 text-body-sm text-secondary">
-          <strong>{`${legacyAppName()}:`}</strong> Stop the old runtime before importing,
-          or both may answer. Imports keep each agent’s key, name and picture.
-          Instructions and workspace come over only if the chosen type supports
-          them; choose provider, model and other settings afterward. An archived
-          agent is unarchived here when possible.
+          <strong>{`${legacyAppName()}:`}</strong> Stop the old runtime before
+          importing, or both may answer. Imports keep each agent’s key, name and
+          picture. Instructions and workspace come over only if the chosen type
+          supports them; choose provider, model and other settings afterward. An
+          archived agent is unarchived here when possible.
         </p>
       )}
       {empty && !old.length ? (
@@ -2313,7 +2353,6 @@ function CommunityImportDialog({
     <Dialog
       open
       size="compact"
-      headerGap="compact"
       footerGap="compact"
       title={`Import ${name}`}
       artwork={
@@ -2687,6 +2726,7 @@ function TeamEditor({
   const [members, setMembers] = useState<readonly string[]>(
     team?.members ?? [],
   );
+  const [lead, setLead] = useState(team?.lead);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [deleting, setDeleting] = useState(false);
@@ -2709,8 +2749,12 @@ function TeamEditor({
   const [opened, setOpened] = useState(team);
   const nameEdited = !!opened && name !== opened.name;
   const membersEdited = !!opened && !sameMembers(members, opened.members);
+  const leadEdited = !!opened && lead !== opened.lead;
   const edited = opened
-    ? nameEdited || membersEdited || instructions !== opened.instructions
+    ? nameEdited ||
+      membersEdited ||
+      leadEdited ||
+      instructions !== opened.instructions
     : !!(name.trim() || instructions || members.length);
   const busy = pending || edited;
   // A Save closes this editor itself once done, so nothing is asked then.
@@ -2729,12 +2773,14 @@ function TeamEditor({
     setInstructions(team.instructions);
     if (!nameEdited) setName(team.name);
     if (!membersEdited) setMembers(team.members);
+    if (!leadEdited) setLead(team.lead);
     if (
       !(nameEdited && team.name !== opened.name) &&
-      !(membersEdited && !sameMembers(team.members, opened.members))
+      !(membersEdited && !sameMembers(team.members, opened.members)) &&
+      !(leadEdited && team.lead !== opened.lead)
     )
       setOpened(team);
-  }, [reverted, team, opened, nameEdited, membersEdited]);
+  }, [reverted, team, opened, nameEdited, membersEdited, leadEdited]);
   const [draft] = useState(() => crypto.randomUUID());
   const which = opened ? { id: opened.id } : { draft };
   // While it has unsaved changes or a Save running, a local team isn't moved
@@ -2743,6 +2789,7 @@ function TeamEditor({
     !!opened &&
     (pending ||
       name !== opened.name ||
+      leadEdited ||
       instructions !== opened.instructions ||
       members.length !== opened.members.length ||
       members.some((pubkey) => !opened.members.includes(pubkey)));
@@ -2811,6 +2858,7 @@ function TeamEditor({
         name: name.trim(),
         instructions,
         members: kept,
+        ...(lead && { lead }),
       }),
     );
   return (
@@ -2895,6 +2943,7 @@ function TeamEditor({
                 onCheckedChange={(checked) => {
                   if (agent.place === "hosted")
                     setPicked((last) => new Map(last).set(agent.pubkey, agent));
+                  if (!checked && agent.pubkey === lead) setLead(undefined);
                   setMembers((last) =>
                     checked
                       ? [...last, agent.pubkey]
@@ -2913,6 +2962,32 @@ function TeamEditor({
           </p>
         )}
       </Section>
+      <Select
+        label="Who gets team mentions"
+        variant="field"
+        description="Choose a lead to receive team mentions and delegate to the other members."
+        value={lead ?? ""}
+        disabled={pending}
+        groups={[
+          {
+            label: "",
+            options: [
+              { value: "", label: "All members" },
+              ...kept.map((pubkey) => ({
+                value: pubkey,
+                label:
+                  choices.find((agent) => agent.pubkey === pubkey)?.name ??
+                  publicKeyLabels([pubkey]).get(pubkey) ??
+                  pubkey,
+              })),
+              ...(lead && !kept.includes(lead)
+                ? [{ value: lead, label: "Unavailable lead", disabled: true }]
+                : []),
+            ],
+          },
+        ]}
+        onValueChange={(value) => setLead(value || undefined)}
+      />
       {error && !deleting && (
         <p role="alert" className="m-0 text-body-sm text-danger">
           {error}

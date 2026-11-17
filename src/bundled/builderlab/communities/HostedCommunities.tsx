@@ -485,7 +485,9 @@ export function HostedCommunities({
   const ready = bound !== null && bound === local;
   const connected = Boolean(auth) && ready && !identityLoadFailed;
   const connectedMark = connected ? (
-    <Tooltip content={`This Builderlab account is connected to this device’s ${appName()} identity.`}>
+    <Tooltip
+      content={`This Builderlab account is connected to this device’s ${appName()} identity.`}
+    >
       <span
         // biome-ignore lint/a11y/noNoninteractiveTabindex: keyboard users need the connection description too.
         tabIndex={0}
@@ -880,7 +882,8 @@ export function HostedCommunities({
                   </>
                 ) : (
                   <>
-                    A deletion request from {npub(blockedOwner)}{` is still pending on this device. Switch to that ${appName()} identity and use Check deletion status before starting another deletion here. If you no longer have that identity, contact support.`}
+                    A deletion request from {npub(blockedOwner)}
+                    {` is still pending on this device. Switch to that ${appName()} identity and use Check deletion status before starting another deletion here. If you no longer have that identity, contact support.`}
                   </>
                 )}
               </p>
@@ -1473,7 +1476,6 @@ function CreateCommunity({
         }
       }}
       size="default"
-      headerGap="compact"
       footerGap="compact"
       initialFocus={() => {
         const input = addressInput.current;

@@ -27,10 +27,10 @@ mod app_agents;
 mod decisions;
 mod deep_links;
 mod dock;
-#[cfg(target_os = "macos")]
-mod spheres_dock_icon;
 mod draft_diagnostics;
 mod huddle_window;
+#[cfg(target_os = "macos")]
+mod spheres_dock_icon;
 use huddle_window::{
     huddle_window_action, huddle_window_open, huddle_window_reset_incoming, huddle_window_update,
     huddle_window_watch, HuddleWindow,
@@ -751,6 +751,7 @@ fn commands<R: tauri::Runtime>() -> impl Fn(tauri::ipc::Invoke<R>) -> bool + Sen
         federated_identity::federated_identity_ask_again,
         federated_identity::federated_identity_sign_in,
         federated_identity::federated_identity_cancel_sign_in,
+        federated_identity::federated_identity_sign_in_link,
         federated_identity::federated_identity_sign_out,
         federated_identity::access::federated_identity_register,
         federated_identity::access::federated_identity_unregister,

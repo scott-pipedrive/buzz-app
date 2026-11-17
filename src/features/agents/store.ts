@@ -594,6 +594,8 @@ export type Team = Readonly<{
   instructions: string;
   /** Agent pubkeys, in the order shown. */
   members: readonly string[];
+  /** When set, team mentions notify only this member. */
+  lead?: string;
   /** A synced team's confirmed head, the base its editor revises. */
   revision?: string;
 }>;
@@ -623,6 +625,9 @@ export function readTeams(storage: AgentStore): readonly Team[] {
             name: team.name,
             instructions: team.instructions,
             members: team.members.filter((member) => PUBKEY.test(member)),
+            ...(typeof team.lead === "string" && PUBKEY.test(team.lead)
+              ? { lead: team.lead }
+              : {}),
           },
         ]
       : [],

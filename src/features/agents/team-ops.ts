@@ -8,14 +8,11 @@ import type { ConfigChannel, ConfigChannels } from "./config-channels";
 import { teamSubject } from "./config-channels";
 import type { ConfigWriter, WriteSide } from "./config-writes";
 import { teamArtifact, teamBody } from "./team-config";
+import type { Team } from "./store";
 
 /** What a team's first save sends: its name and instructions, with the
  * members its members are then added from. */
-export type TeamSent = Readonly<{
-  name: string;
-  instructions: string;
-  members: readonly string[];
-}>;
+export type TeamSent = Pick<Team, "name" | "instructions" | "members" | "lead">;
 
 type Template = Parameters<ConfigWriter["revise"]>[1];
 
@@ -25,6 +22,7 @@ export type TeamEdit = Readonly<{
   instructions: string;
   /** The owner's agents the team should have. */
   members: readonly string[];
+  lead?: string;
   /** What the editor opened: its head and its members. Absent for a new
    * team, whose id was made before this call. */
   base?: Readonly<{ head: string | null; members: readonly string[] }>;
@@ -199,8 +197,11 @@ export function teamOps(deps: TeamDeps) {
     const write = await side(id, channel.id, edit.name);
     const head = deps.store.state(write.subject).head;
     const shown = head && teamBody(head.content);
-    const same =
-      shown?.name === edit.name && shown.instructions === edit.instructions;
+    const matches = (body: ReturnType<typeof teamBody>, sent: TeamSent) =>
+      body?.name === sent.name &&
+      body.instructions === sent.instructions &&
+      body.lead === sent.lead;
+    const same = matches(shown ?? undefined, edit);
     if (!(base && head?.id === base.head && same)) {
       // A resumed move sends what its earlier try did; newer edits follow as
       // an Edit of the copy.
@@ -208,11 +209,17 @@ export function teamOps(deps: TeamDeps) {
         name: edit.name,
         instructions: edit.instructions,
         members: edit.members,
+        ...(edit.lead && { lead: edit.lead }),
       };
       if (!base) await edit.saving?.(sent);
       const saved = await deps.writer.save(
         write,
-        { version: 1, name: sent.name, instructions: sent.instructions },
+        {
+          version: 1,
+          name: sent.name,
+          instructions: sent.instructions,
+          lead: sent.lead,
+        },
         base ? base.head : null,
         [["team", id]],
       );
@@ -223,8 +230,7 @@ export function teamOps(deps: TeamDeps) {
         !base &&
         saved.status === "conflict" &&
         !!body &&
-        (edit.adopt ||
-          (body.name === sent.name && body.instructions === sent.instructions));
+        (edit.adopt || matches(body, sent));
       if (saved.status === "unknown" || saved.status === "accepted-unavailable")
         return fail(
           "The name and instructions may or may not have saved; reopen the team to check",
@@ -236,8 +242,7 @@ export function teamOps(deps: TeamDeps) {
         return fail("The team changed since it was opened; reopen it");
       created = !base && saved.status === "saved";
       const partial =
-        body?.name === sent.name &&
-        body.instructions === sent.instructions &&
+        matches(body ?? undefined, sent) &&
         present.every((pubkey) => sent.members.includes(pubkey));
       // An earlier try's own partial copy is this device's create.
       created ||= !!(edit.fresh && edit.resume && partial);

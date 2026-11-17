@@ -78,7 +78,8 @@ impl OAuthCallbackHost {
     }
 
     /// NIP-FA binds its handoff secret instead of requiring echoed OAuth state.
-    /// The attempt and all callback values stay inside the native session owner.
+    /// The attempt and all callback values stay inside the native session owner;
+    /// only the authorization page URL is shown, so a person can copy it.
     pub(crate) fn begin_federated(
         &self,
         owner: &str,
@@ -419,7 +420,11 @@ async fn reply(stream: &mut TcpStream, status: u16, message: &str, builderlab: b
     let script = format!("<script>{script}</script>");
     let artwork = base64::engine::general_purpose::STANDARD.encode(include_bytes!("cubes.webp"));
     let artwork = include_str!("artwork.html").replace("{{artwork}}", &artwork);
-    let provider = if builderlab { "Builderlab" } else { crate::DISPLAY_NAME };
+    let provider = if builderlab {
+        "Builderlab"
+    } else {
+        crate::DISPLAY_NAME
+    };
     let mark = if builderlab {
         include_str!("../../../public/builderlab-mark.svg")
     } else if crate::DISPLAY_NAME == "Spheres" {
@@ -427,7 +432,11 @@ async fn reply(stream: &mut TcpStream, status: u16, message: &str, builderlab: b
     } else {
         include_str!("../../../public/buzz-mark.svg")
     };
-    let label = if builderlab { String::new() } else { format!("<span>{provider}</span>") };
+    let label = if builderlab {
+        String::new()
+    } else {
+        format!("<span>{provider}</span>")
+    };
     let brand = include_str!("brand.html")
         .replace("{{provider}}", provider)
         .replace("{{mark}}", mark)

@@ -89,13 +89,16 @@ export function useTeamMentions(
           id: `saved:${team.id}`,
           name: team.name,
           agents: team.members,
+          lead: team.lead,
         },
+        savedId: team.id,
         current: () => {
           const latest = readSaved().find((entry) => entry.id === team.id);
           return (
             !!latest &&
             latest.name === team.name &&
             latest.revision === team.revision &&
+            latest.lead === team.lead &&
             latest.members.length === team.members.length &&
             latest.members.every((key, index) => key === team.members[index])
           );
@@ -106,6 +109,7 @@ export function useTeamMentions(
           ? [
               {
                 value: entry.record.value,
+                savedId: undefined,
                 ready: catalog.status === "ready",
                 current: () => {
                   const fresh = kit?.snapshot();
@@ -207,11 +211,21 @@ export function useTeamMentions(
     const current = open && rows?.length ? candidates() : [];
     const eligible = new Map(current.map((c) => [c.recipient.pubkey, c]));
     const choices = (open ? (rows ?? []) : []).map(
-      ({ value, current, members }) => {
+      ({ value, current, members, savedId }) => {
         const recipients = value.agents.flatMap((key) => {
           const person = eligible.get(key)?.recipient;
           return person ? [{ pubkey: person.pubkey, name: person.name }] : [];
         });
+        const lead = "lead" in value ? value.lead : undefined;
+        const target =
+          lead && recipients.find((person) => person.pubkey === lead);
+        const channel = model.channel;
+        const workersOutside =
+          channel &&
+          channel.channelType !== "solo" &&
+          value.agents.some(
+            (key) => key !== lead && !eligible.get(key)?.member,
+          );
         const disabled = !current()
           ? "Team changed or unavailable. Reopen to refresh."
           : members.some((key) => !eligible.get(key)?.member)
@@ -222,13 +236,14 @@ export function useTeamMentions(
                 ? "Teams can mention at most 32 agents."
                 : recipients.length !== value.agents.length
                   ? "A team member is unavailable. Edit the team or refresh choices."
-                  : undefined;
+                  : lead && !target
+                    ? "Choose an available lead in the team editor."
+                    : lead && workersOutside
+                      ? "Add the other team members to this conversation first."
+                      : undefined;
         const outside = recipients.filter(
           (person) => !eligible.get(person.pubkey)?.member,
         ).length;
-        const channel = session.channels
-          .list()
-          .channels.find((channel) => channel.id === channelId);
         const consequence = !outside
           ? ""
           : channel?.channelType === "dm"
@@ -240,10 +255,16 @@ export function useTeamMentions(
           id: `team:${value.id}`,
           name: value.name,
           recipients,
+          targets: target ? [target] : recipients,
+          teamId: target ? savedId : undefined,
           disabled,
           detail:
             disabled ??
-            [`Saved team · ${recipients.length} agents`, consequence]
+            [
+              `Saved team · ${recipients.length} agents`,
+              target && `Notifies ${target.name}`,
+              consequence,
+            ]
               .filter(Boolean)
               .join(" · "),
           canSelect: () => {

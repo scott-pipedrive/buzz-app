@@ -55,9 +55,11 @@ export type ComposerToolProps = Readonly<{
    * Prose never resolves to identities. Membership is checked by session delivery.
    * Like insertText, this command is revoked with the tool/destination lifetime. */
   insertMention(recipient: Readonly<{ pubkey: string; name: string }>): boolean;
-  /** All-or-nothing insertion of a saved selection as individual mentions. */
+  /** All-or-nothing insertion of individual mentions. For a lead-directed
+   * saved team, the bundled mention picker supplies its verified team ID. */
   insertMentions(
     recipients: readonly Readonly<{ pubkey: string; name: string }>[],
+    teamId?: string,
   ): boolean;
   /** Replace all selected mentions in one undoable edit, preserving prose and focus.
    * An empty selection clears mentions. Rejected while editing a sent message. */
@@ -392,6 +394,8 @@ export type CompletionEdit =
     }>
   | Readonly<{
       mentions: readonly Readonly<{ pubkey: string; name: string }>[];
+      /** Bundled saved-team selector only. The host checks the team and lead. */
+      teamId?: string;
       text?: never;
       mention?: never;
       pending?: never;

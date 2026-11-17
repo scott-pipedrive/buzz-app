@@ -90,7 +90,13 @@ export function teamBody(content: string) {
     const body = JSON.parse(content) as Record<string, unknown>;
     return typeof body.name === "string" &&
       typeof body.instructions === "string"
-      ? { name: body.name, instructions: body.instructions }
+      ? {
+          name: body.name,
+          instructions: body.instructions,
+          ...(typeof body.lead === "string" && /^[0-9a-f]{64}$/.test(body.lead)
+            ? { lead: body.lead }
+            : {}),
+        }
       : undefined;
   } catch {
     return undefined;

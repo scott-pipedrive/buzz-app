@@ -22,7 +22,10 @@ fn main() {
         .ok()
         .and_then(|value| serde_json::from_str::<serde_json::Value>(&value).ok())
         .is_some_and(|config| config["productName"] == "Spheres");
-    println!("cargo:rustc-env=BUZZ_DISPLAY_NAME={}", if spheres { "Spheres" } else { "Buzz" });
+    println!(
+        "cargo:rustc-env=BUZZ_DISPLAY_NAME={}",
+        if spheres { "Spheres" } else { "Buzz" }
+    );
     configure_nsec_backup();
     configure_federated_identity();
     configure_enterprise_auth();
@@ -108,6 +111,7 @@ fn main() {
             "federated_identity_ask_again",
             "federated_identity_sign_in",
             "federated_identity_cancel_sign_in",
+            "federated_identity_sign_in_link",
             "federated_identity_sign_out",
             "credential_pair_answer",
             "credential_pair_prompt",

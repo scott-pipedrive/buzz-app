@@ -332,7 +332,6 @@ function TypeField({
             ? `Move ${agent.name} to ${migration.target.title}?`
             : "Move agent?"
         }
-        headerGap="compact"
         actions={
           <>
             <Button

@@ -173,6 +173,12 @@ export function completionResult(
                 ? { token }
                 : "mentions" in edit && edit.mentions
                   ? {
+                      ...(typeof edit.teamId === "string" &&
+                      provider &&
+                      isBundledContribution(provider) &&
+                      provider.pluginId === "buzz.mentions"
+                        ? { teamId: edit.teamId }
+                        : {}),
                       mentions: Object.freeze(
                         edit.mentions.map((person: MentionRecipient) =>
                           Object.freeze({
@@ -183,7 +189,12 @@ export function completionResult(
                       ),
                     }
                   : "mention" in edit
-                    ? { mention: Object.freeze({ ...edit.mention }) }
+                    ? {
+                        mention: Object.freeze({
+                          pubkey: edit.mention?.pubkey,
+                          name: edit.mention?.name,
+                        }),
+                      }
                     : { text: edit.text },
             ),
       }),
