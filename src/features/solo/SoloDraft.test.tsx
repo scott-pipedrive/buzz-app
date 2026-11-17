@@ -3488,8 +3488,11 @@ it.each(["unchanged", "changed", "changed during preparation"])(
     };
     const owner = { ...modelAgents, snapshot: () => snapshot };
     const region = roster === "changed during preparation" ? REGION : undefined;
-    const prepared = Promise.withResolvers<void>();
-    const prepareStart = vi.fn(() => prepared.promise);
+    let finishPreparation!: () => void;
+    const preparation = new Promise<void>((resolve) => {
+      finishPreparation = resolve;
+    });
+    const prepareStart = vi.fn(() => preparation);
     if (region)
       regionNavigation.set({
         source: { prepareStart },
@@ -3533,7 +3536,7 @@ it.each(["unchanged", "changed", "changed during preparation"])(
           teams: [{ ...team, members: [lead.pubkey] }],
         };
       } finally {
-        await act(async () => prepared.resolve());
+        await act(async () => finishPreparation());
       }
     }
     if (roster !== "unchanged") {
