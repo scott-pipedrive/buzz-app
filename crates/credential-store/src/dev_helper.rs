@@ -3,6 +3,7 @@ use std::ffi::OsStr;
 use std::io::Read;
 use std::os::fd::{AsFd, OwnedFd};
 use std::os::unix::net::UnixStream;
+use std::os::unix::process::CommandExt;
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
@@ -10,37 +11,20 @@ use zeroize::Zeroizing;
 
 /// One `--item` request: `read`, `add`, `replace` or `delete` of an exact
 /// service/account. The helper decides which items it serves.
+#[cfg(debug_assertions)]
 pub(super) fn item(
     helper: &OsStr,
+    authorize: bool,
     operation: &str,
     service: &str,
     account: &str,
     value: &[u8],
-) -> Result<Zeroizing<Vec<u8>>> {
-    store(
-        helper,
-        "--item",
-        operation,
-        service,
-        account,
-        value,
-        2 * 1024 * 1024,
-    )
-}
-
-fn store(
-    helper: &OsStr,
-    store: &str,
-    operation: &str,
-    service: &str,
-    account: &str,
-    value: &[u8],
-    limit: usize,
 ) -> Result<Zeroizing<Vec<u8>>> {
     use nix::poll::{poll, PollFd, PollFlags, PollTimeout};
     use std::io::Write;
     use std::net::Shutdown;
 
+    let limit = 2 * 1024 * 1024;
     if !Path::new(helper).is_absolute()
         || !matches!(operation, "read" | "add" | "replace" | "delete")
         || value.len() > limit
@@ -48,17 +32,16 @@ fn store(
     {
         return Err(Error::Unavailable);
     }
-    let authorize = std::env::var_os("BUZZ_DEV_CREDENTIAL_HELPER_AUTHORIZE").as_deref()
-        == Some(OsStr::new("1"));
     let timeout = Duration::from_secs(if authorize { 120 } else { 5 });
     let deadline = Instant::now() + timeout;
     let (mut channel, helper_channel) = UnixStream::pair().map_err(|_| Error::Unavailable)?;
     let mut command = Command::new(helper);
+    command.process_group(0);
     if authorize {
         command.arg("--authorize");
     }
     let mut child = command
-        .args([store, operation, service, account])
+        .args(["--item", operation, service, account])
         .stdin(Stdio::null())
         .stdout(Stdio::from(OwnedFd::from(helper_channel)))
         .stderr(Stdio::null())
@@ -117,9 +100,11 @@ fn store(
         Ok(output)
     })();
     // A helper can reject a write before it reads the payload.
+    let mut exited = false;
     let status = loop {
         match child.try_wait() {
             Ok(Some(status)) => {
+                exited = true;
                 break match status.code() {
                     Some(0) => Ok(()),
                     Some(10) => Err(Error::Absent),
@@ -127,15 +112,18 @@ fn store(
                     Some(12) => Err(Error::Corrupt),
                     Some(13) => Err(Error::Occupied),
                     _ => Err(Error::Unavailable),
-                }
+                };
             }
             Ok(None) if Instant::now() < deadline => std::thread::sleep(Duration::from_millis(10)),
             _ => break Err(Error::Unavailable),
         }
     };
     let result = status.and(exchange);
-    if result.is_err() {
-        let _ = child.kill();
+    if result.is_err() && !exited {
+        // An expired app request must stop both the bridge and its helper.
+        use nix::sys::signal::{killpg, Signal};
+        use nix::unistd::Pid;
+        let _ = killpg(Pid::from_raw(child.id() as i32), Signal::SIGKILL);
         let _ = child.wait();
     }
     result

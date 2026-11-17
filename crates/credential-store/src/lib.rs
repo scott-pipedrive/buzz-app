@@ -12,6 +12,27 @@ use zeroize::Zeroizing;
 #[cfg(all(not(test), target_os = "macos", debug_assertions))]
 mod dev_helper;
 
+#[cfg(all(not(test), target_os = "macos", debug_assertions))]
+static LOCAL_DEV_HELPER: std::sync::OnceLock<Result<std::path::PathBuf>> =
+    std::sync::OnceLock::new();
+
+/// Register the host's verified local helper before the first credential access.
+/// A failed verification disables credential access through this configuration.
+#[cfg(all(not(test), target_os = "macos", debug_assertions))]
+pub fn configure_local_dev_helper(helper: Result<std::path::PathBuf>) {
+    let _ = LOCAL_DEV_HELPER.set(helper);
+}
+
+#[cfg(not(test))]
+pub fn dev_helper_selected() -> bool {
+    #[cfg(all(target_os = "macos", debug_assertions))]
+    {
+        std::env::var_os("BUZZ_DEV_CREDENTIAL_HELPER").is_some() || LOCAL_DEV_HELPER.get().is_some()
+    }
+    #[cfg(not(all(target_os = "macos", debug_assertions)))]
+    false
+}
+
 /// Debug-only: the selected local helper's answer for one item, or `None` when
 /// no helper is configured. A helper failure never permits OS access.
 #[cfg(all(not(test), target_os = "macos", debug_assertions))]
@@ -21,8 +42,17 @@ pub fn dev_item(
     account: &str,
     value: &[u8],
 ) -> Option<Result<Zeroizing<Vec<u8>>>> {
-    std::env::var_os("BUZZ_DEV_CREDENTIAL_HELPER")
-        .map(|helper| dev_helper::item(&helper, operation, service, account, value))
+    if let Some(helper) = std::env::var_os("BUZZ_DEV_CREDENTIAL_HELPER") {
+        let authorize = std::env::var_os("BUZZ_DEV_CREDENTIAL_HELPER_AUTHORIZE").as_deref()
+            == Some(std::ffi::OsStr::new("1"));
+        return Some(dev_helper::item(
+            &helper, authorize, operation, service, account, value,
+        ));
+    }
+    LOCAL_DEV_HELPER.get().map(|helper| match helper {
+        Ok(path) => dev_helper::item(path.as_os_str(), true, operation, service, account, value),
+        Err(error) => Err(*error),
+    })
 }
 
 pub const HUMAN_ACCOUNT: &str = "human";
@@ -513,8 +543,7 @@ pub fn compare_session(
     }
     let result = session_write(service, account, replacement);
     #[cfg(all(target_os = "macos", debug_assertions))]
-    if result == Err(Error::Unavailable) && std::env::var_os("BUZZ_DEV_CREDENTIAL_HELPER").is_some()
-    {
+    if result == Err(Error::Unavailable) && dev_helper_selected() {
         let stored = match read_session(service, account) {
             Ok(value) => Some(value),
             Err(Error::Absent) => None,

@@ -31,6 +31,8 @@ mod draft_diagnostics;
 mod huddle_window;
 #[cfg(target_os = "macos")]
 mod spheres_dock_icon;
+#[cfg(all(target_os = "macos", debug_assertions))]
+mod spheres_keychain;
 use huddle_window::{
     huddle_window_action, huddle_window_open, huddle_window_reset_incoming, huddle_window_update,
     huddle_window_watch, HuddleWindow,
@@ -918,6 +920,8 @@ fn commands<R: tauri::Runtime>() -> impl Fn(tauri::ipc::Invoke<R>) -> bool + Sen
 pub fn run() {
     credential_service::drop_inherited();
     let context = app_context();
+    #[cfg(all(not(test), target_os = "macos", debug_assertions))]
+    spheres_keychain::configure(context.config());
     // Reject unsafe test launch settings before any identity or pending erase work.
     let native_mcp = native_mcp::plugin(
         context.config(),

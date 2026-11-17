@@ -126,8 +126,7 @@ mod items {
         }
     }
     pub(super) fn helper_selected(_: &Path) -> bool {
-        cfg!(all(target_os = "macos", debug_assertions))
-            && std::env::var_os("BUZZ_DEV_CREDENTIAL_HELPER").is_some()
+        buzz_credential_store::dev_helper_selected()
     }
     pub(super) fn compare(
         _: &Path,

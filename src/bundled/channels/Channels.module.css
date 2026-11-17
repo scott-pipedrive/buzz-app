@@ -474,13 +474,6 @@ details:not([open]) > summary .sectionChevron {
   letter-spacing: var(--text-caption--letter-spacing);
   border-top: 1px solid var(--border-standard);
 }
-.spheresWelcome {
-  display: grid;
-  flex: 1;
-  place-items: center;
-  padding: var(--space-6);
-}
-
 .empty {
   padding: var(--space-8) var(--space-4);
   color: var(--text-subtle);

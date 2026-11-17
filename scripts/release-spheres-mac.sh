@@ -25,8 +25,20 @@ fi
 mkdir "$output"
 output=$(cd "$output" && pwd -P)
 
+signing="$HOME/Library/Application Support/Spheres Preview Signing"
+helper_fingerprint=${SPHERES_HELPER_CERTIFICATE_SHA1:-}
+if [[ -z "$helper_fingerprint" && -r "$signing/Spheres Preview Signing.pem" ]]; then
+  helper_fingerprint=$(/usr/bin/openssl x509 -in "$signing/Spheres Preview Signing.pem" \
+    -noout -fingerprint -sha1 | cut -d= -f2 | tr -d :)
+fi
+if [[ -n "$helper_fingerprint" && ! "$helper_fingerprint" =~ ^[[:xdigit:]]{40}$ ]]; then
+  printf 'Invalid Spheres helper certificate fingerprint.\n' >&2
+  exit 1
+fi
+
 cd "$repo"
 env -u TAURI_SIGNING_PRIVATE_KEY -u TAURI_SIGNING_PRIVATE_KEY_PATH -u TAURI_SIGNING_PRIVATE_KEY_PASSWORD \
+  BUZZ_BUILD_SPHERES_HELPER_CERTIFICATE="$helper_fingerprint" \
   BUZZ_UPDATER_PUBLIC_KEY="$public_key" BUZZ_UPDATER_ENDPOINT="$endpoint" \
   bin/pnpm build:spheres --config "$config"
 
@@ -36,6 +48,9 @@ bundle_id=$(/usr/bin/plutil -extract identifier raw -o - "$product")
 [[ $(/usr/bin/plutil -extract CFBundleShortVersionString raw -o - "$app/Contents/Info.plist") == "$version" ]]
 /usr/bin/grep -aqF "$endpoint" "$app/Contents/MacOS/Buzz"
 /usr/bin/grep -aqF "$public_key" "$app/Contents/MacOS/Buzz"
+if [[ -n "$helper_fingerprint" ]]; then
+  /usr/bin/grep -aqF "$helper_fingerprint" "$app/Contents/MacOS/Buzz"
+fi
 if [[ -z "${APPLE_SIGNING_IDENTITY:-}" ]]; then
   signing="$HOME/Library/Application Support/Spheres Preview Signing"
   keychain="$signing/Spheres Preview.keychain-db"

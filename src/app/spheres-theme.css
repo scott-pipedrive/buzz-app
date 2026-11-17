@@ -217,11 +217,7 @@
   }
 
   :root[data-spheres][data-color-mode="light"]
-    :is(
-      [data-spheres-messages-welcome],
-      [data-active-conversation],
-      [data-activity-empty] .buzz-empty-state
-    ) {
+    :is([data-active-conversation], [data-activity-empty] .buzz-empty-state) {
     --spheres-paper-tint: color-mix(
       in srgb,
       var(--surface-panel) 86%,

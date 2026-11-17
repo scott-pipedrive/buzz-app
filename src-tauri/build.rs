@@ -26,6 +26,20 @@ fn main() {
         "cargo:rustc-env=BUZZ_DISPLAY_NAME={}",
         if spheres { "Spheres" } else { "Buzz" }
     );
+    const HELPER_CERTIFICATE: &str = "BUZZ_BUILD_SPHERES_HELPER_CERTIFICATE";
+    println!("cargo:rerun-if-env-changed={HELPER_CERTIFICATE}");
+    if spheres {
+        if let Some(leaf) = std::env::var(HELPER_CERTIFICATE)
+            .ok()
+            .filter(|leaf| !leaf.is_empty())
+        {
+            assert!(
+                leaf.len() == 40 && leaf.bytes().all(|byte| byte.is_ascii_hexdigit()),
+                "Invalid Spheres helper certificate fingerprint"
+            );
+            println!("cargo:rustc-env=BUZZ_SPHERES_HELPER_CERTIFICATE={leaf}");
+        }
+    }
     configure_nsec_backup();
     configure_federated_identity();
     configure_enterprise_auth();

@@ -17,5 +17,8 @@ In Spheres, open **Settings → Plugins → Manage plugins → Add → Browse**.
 `dist-plugins/spheres-home`. If Spheres shows a review, choose **Install plugin**.
 Open **Spheres Home** from the app dock.
 
+From **Start a conversation**, choose **Open Messages**, then **New message** to
+pick a person.
+
 Pass an output directory as the first argument to build the same plugin into a
 different folder.
